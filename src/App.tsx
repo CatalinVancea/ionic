@@ -2,7 +2,9 @@ import React from 'react';
 import { Redirect, Route } from 'react-router-dom';
 import { IonApp, IonRouterOutlet } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import Home from './pages/Home';
+import { StudentProvider } from './todo/StudentProvider';
+import { StudentEdit } from './todo/StudentEdit';
+import { StudentList} from './todo/StudentList';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -25,12 +27,16 @@ import './theme/variables.css';
 
 const App: React.FC = () => (
   <IonApp>
-    <IonReactRouter>
-      <IonRouterOutlet>
-        <Route path="/home" component={Home} exact={true} />
-        <Route exact path="/" render={() => <Redirect to="/home" />} />
-      </IonRouterOutlet>
-    </IonReactRouter>
+    <StudentProvider>
+      <IonReactRouter>
+        <IonRouterOutlet>
+          <Route path="/students" component={StudentList} exact={true} />
+          <Route path="/student" component={StudentEdit} exact={true} />
+          <Route path="/student/:id" component={StudentEdit} exact={true} />
+          <Route exact path="/" render={() => <Redirect to="/students" />} />
+        </IonRouterOutlet>
+      </IonReactRouter>
+    </StudentProvider>
   </IonApp>
 );
 
