@@ -2,11 +2,12 @@ import React, { useCallback, useEffect, useReducer } from 'react';
 import PropTypes from 'prop-types';
 import { getLogger } from '../core';
 import { StudentProps } from './StudentProps';
-import { createStudent, getStudents, newWebSocket, updateStudent } from './StudentApi';
+import { createStudent, getStudents, newWebSocket, updateStudent, removeStudent } from './StudentApi';
 
 const log = getLogger('StudentProvider');
 
 type SaveStudentFn = (student: StudentProps) => Promise<any>;
+type DeleteStudentFn = (student: StudentProps) => Promise<any>;
 
 export interface StudentsState {
     students?: StudentProps[],
@@ -15,6 +16,7 @@ export interface StudentsState {
     saving: boolean,
     savingError?: Error | null,
     saveStudent?: SaveStudentFn,
+    deleteStudent?: DeleteStudentFn,
 }
 
 interface ActionProps {
@@ -33,6 +35,9 @@ const FETCH_STUDENTS_FAILED = 'FETCH_STUDENTS_FAILED';
 const SAVE_STUDENT_STARTED = 'SAVE_STUDENT_STARTED';
 const SAVE_STUDENT_SUCCEEDED = 'SAVE_STUDENT_SUCCEEDED';
 const SAVE_STUDENT_FAILED = 'SAVE_STUDENT_FAILED';
+const DELETE_STUDENT_STARTED = 'DELETE_STUDENT_STARTED';
+const DELETE_STUDENT_SUCCEEDED = 'DELETE_STUDENT_SUCCEEDED';
+const DELETE_STUDENT_FAILED = 'DELETE_STUDENT_FAILED';
 
 const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
     (state, { type, payload }) => {
@@ -52,10 +57,31 @@ const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
                 if (index === -1) {
                     students.splice(0, 0, student);
                 } else {
+                    log(`reducer, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
                     students[index] = student;
                 }
                 return { ...state, students, saving: false };
             case SAVE_STUDENT_FAILED:
+                return { ...state, savingError: payload.error, saving: false };
+            case DELETE_STUDENT_STARTED:
+                return { ...state, savingError: null, saving: true };
+            case DELETE_STUDENT_SUCCEEDED:
+                const students2 = [...(state.students || [])];
+                const student2 = payload.student;
+                const index2 = students2.findIndex(it => it.id === student2.id);
+                log(`reducer-delete1, index2: ${index2}`);
+                if (index2 === -1) {
+                    log(`reducer-delete2, index2: ${index2}`);
+                    // students2.splice(0, 0, student2);
+                } else {
+                    log(`reducer-delete3, student: ${student2.name}  ${student2.graduated}  ${student2.grade}  ${student2.enrollment}`);
+                    log(`reducer-delete4, student: ${students2.length}`);
+                    //students2[index2] = students2[index2+1];
+                    students2.splice(index2, 1);
+                    log(`reducer-delete5, student: ${students2.length}`);
+                }
+                return { ...state, students2, saving: false };
+            case DELETE_STUDENT_FAILED:
                 return { ...state, savingError: payload.error, saving: false };
             default:
                 return state;
@@ -74,7 +100,8 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
     useEffect(getStudentsEffect, []);
     useEffect(wsEffect, []);
     const saveStudent = useCallback<SaveStudentFn>(saveStudentCallback, []);
-    const value = { students, fetching, fetchingError, saving, savingError, saveStudent };
+    const deleteStudent = useCallback<DeleteStudentFn>(deleteStudentCallback, []);
+    const value = { students, fetching, fetchingError, saving, savingError, saveStudent, deleteStudent};
     log('returns');
 
     return (
@@ -119,6 +146,19 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
         }
     }
 
+    async function deleteStudentCallback(student: StudentProps) {
+        try {
+            log('deleteStudent started');
+            dispatch({ type: DELETE_STUDENT_STARTED });
+            const deletedStudent = await (removeStudent(student));
+            log('deleteStudent succeeded');
+            dispatch({ type: DELETE_STUDENT_SUCCEEDED, payload: { student: deletedStudent } });
+        } catch (error) {
+            log('deleteStudent failed');
+            dispatch({ type: DELETE_STUDENT_FAILED, payload: { error } });
+        }
+    }
+
     function wsEffect() {
         let canceled = false;
         log('wsEffect - connecting');
@@ -127,9 +167,14 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
                 return;
             }
             const { event, payload: { student }} = message;
-            log(`ws message, student ${event}`);
+            log(`ws message, student ${event} ${student.graduated}`);
             if (event === 'created' || event === 'updated') {
+                // log(`wsEffect, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
                 dispatch({ type: SAVE_STUDENT_SUCCEEDED, payload: { student } });
+            }
+            if (event === 'deleted') {
+                log(`wsEffect deleted, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
+                dispatch({ type: DELETE_STUDENT_SUCCEEDED, payload: { student } });
             }
         });
         return () => {

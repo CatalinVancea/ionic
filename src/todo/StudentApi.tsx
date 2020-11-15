@@ -42,6 +42,10 @@ export const updateStudent: (student: StudentProps) => Promise<StudentProps[]> =
     return withLogs(axios.put(`${studentUrl}/${student.id}`, student, config), 'updateStudent');
 }
 
+export const removeStudent: (student: StudentProps) => Promise<StudentProps[]> = student => {
+    return withLogs(axios.delete(`${studentUrl}/${student.id}`, config), 'deleteStudent');
+}
+
 interface MessageData {
     event: string;
     payload: {

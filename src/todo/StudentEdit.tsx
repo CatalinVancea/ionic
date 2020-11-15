@@ -30,7 +30,7 @@ interface StudentEditProps extends RouteComponentProps<{
 }> {}
 
 export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
-    const { students, saving, savingError, saveStudent } = useContext(StudentContext);
+    const { students, saving, savingError, saveStudent, deleteStudent } = useContext(StudentContext);
     const [name, setName] = useState('');
     const [graduated, setGraduated] = useState(Boolean());
     const [grade, setGrade] = useState(Number());
@@ -43,11 +43,18 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
         setStudent(student);
         if (student) {
             setName(student.name);
+            setEnrollment(student.enrollment || '');
+            setGraduated(student.graduated || Boolean());
+            setGrade(student.grade || Number());
         }
     }, [match.params.id, students]);
     const handleSave = () => {
-        const editedStudent = student ? { ...student, name } : { name };
+        const editedStudent = student ? { ...student, name, graduated, grade, enrollment } : { name, graduated, grade, enrollment };
         saveStudent && saveStudent(editedStudent).then(() => history.goBack());
+    };
+    const handleDelete = () => {
+        const deletedStudent = student ? { ...student, name, graduated, grade, enrollment } : { name, graduated, grade, enrollment };
+        deleteStudent && deleteStudent(deletedStudent).then(() => history.goBack());
     };
     log('render');
     return (
@@ -58,6 +65,9 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
                     <IonButtons slot="end">
                         <IonButton onClick={handleSave}>
                             Save
+                        </IonButton>
+                        <IonButton onClick={handleDelete}>
+                            Delete
                         </IonButton>
                     </IonButtons>
                 </IonToolbar>

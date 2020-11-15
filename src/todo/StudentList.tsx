@@ -11,7 +11,7 @@ import {
     IonTitle,
     IonToolbar
 } from '@ionic/react';
-import { add } from 'ionicons/icons';
+import { add, removeCircle, reload} from 'ionicons/icons';
 import Student from './Student';
 import { getLogger } from '../core';
 import { StudentContext } from './StudentProvider';
@@ -32,18 +32,11 @@ export const StudentList: React.FC<RouteComponentProps> = ({ history }) => {
                 <IonLoading isOpen={fetching} message="Fetching students" />
                 {students && (
                     <IonList>
-                        {students.map(({ id, name}) =>
-                            <div>
-                                <Student key={id} id={id} name={name} grade={Number()}
-                                     graduated={Boolean('true')} enrollment={""}
+                        {students.map(({ id, name, graduated,
+                                           grade, enrollment}) =>
+                                <Student key={id} id={id} name={name} grade={grade}
+                                     graduated={graduated} enrollment={enrollment}
                                      onEdit={id => history.push(`/student/${id}`)} />
-
-                                <IonFab vertical="bottom" horizontal="end" slot="fixed">
-                                    <IonFabButton onClick={() => history.push('/student')}>
-                                        <IonIcon icon={add} />
-                                    </IonFabButton>
-                                </IonFab>
-                            </div>
                         )}
                     </IonList>
                 )}
