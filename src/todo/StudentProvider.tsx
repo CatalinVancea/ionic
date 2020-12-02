@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useReducer } from 'react';
+import React, { useCallback, useContext, useEffect, useReducer } from 'react';
 import PropTypes from 'prop-types';
 import { getLogger } from '../core';
 import { StudentProps } from './StudentProps';
 import { createStudent, getStudents, newWebSocket, updateStudent, removeStudent } from './StudentApi';
+import { AuthContext } from '../auth';
 
 const log = getLogger('StudentProvider');
 
@@ -95,12 +96,13 @@ interface StudentProviderProps {
 }
 
 export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) => {
+    const { token } = useContext(AuthContext);
     const [state, dispatch] = useReducer(reducer, initialState);
     const { students, fetching, fetchingError, saving, savingError } = state;
-    useEffect(getStudentsEffect, []);
-    useEffect(wsEffect, []);
-    const saveStudent = useCallback<SaveStudentFn>(saveStudentCallback, []);
-    const deleteStudent = useCallback<DeleteStudentFn>(deleteStudentCallback, []);
+    useEffect(getStudentsEffect, [token]);
+    useEffect(wsEffect, [token]);
+    const saveStudent = useCallback<SaveStudentFn>(saveStudentCallback, [token]);
+    const deleteStudent = useCallback<DeleteStudentFn>(deleteStudentCallback, [token]);
     const value = { students, fetching, fetchingError, saving, savingError, saveStudent, deleteStudent};
     log('returns');
 
@@ -118,10 +120,13 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
         }
 
         async function fetchStudents() {
+            if (!token?.trim()) {
+                return;
+            }
             try {
                 log('fetchStudents started');
                 dispatch({ type: FETCH_STUDENTS_STARTED });
-                const students = await getStudents();
+                const students = await getStudents(token);
                 log('fetchStudents succeeded');
                 if (!canceled) {
                     dispatch({ type: FETCH_STUDENTS_SUCCEEDED, payload: { students } });
@@ -137,7 +142,7 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
         try {
             log('saveStudent started');
             dispatch({ type: SAVE_STUDENT_STARTED });
-            const savedStudent = await (student.id ? updateStudent(student) : createStudent(student));
+            const savedStudent = await (student.id ? updateStudent(token, student) : createStudent(token, student));
             log('saveStudent succeeded');
             dispatch({ type: SAVE_STUDENT_SUCCEEDED, payload: { student: savedStudent } });
         } catch (error) {
@@ -150,7 +155,7 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
         try {
             log('deleteStudent started');
             dispatch({ type: DELETE_STUDENT_STARTED });
-            const deletedStudent = await (removeStudent(student));
+            const deletedStudent = await (removeStudent(token, student));
             log('deleteStudent succeeded');
             dispatch({ type: DELETE_STUDENT_SUCCEEDED, payload: { student: deletedStudent } });
         } catch (error) {
@@ -162,7 +167,7 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
     function wsEffect() {
         let canceled = false;
         log('wsEffect - connecting');
-        const closeWebSocket = newWebSocket(message => {
+        const closeWebSocket = newWebSocket(token, message => {
             if (canceled) {
                 return;
             }
@@ -173,7 +178,7 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
                 dispatch({ type: SAVE_STUDENT_SUCCEEDED, payload: { student } });
             }
             if (event === 'deleted') {
-                log(`wsEffect deleted, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
+                // log(`wsEffect deleted, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
                 dispatch({ type: DELETE_STUDENT_SUCCEEDED, payload: { student } });
             }
         });

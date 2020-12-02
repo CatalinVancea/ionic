@@ -1,49 +1,25 @@
 import axios from 'axios';
-import { getLogger } from '../core';
 import { StudentProps } from './StudentProps';
+import { authConfig, baseUrl, getLogger, withLogs } from '../core';
 
 const log = getLogger('StudentApi');
 
-const baseUrl = 'localhost:3000';
 const studentUrl = `http://${baseUrl}/student`;
 
-interface ResponseProps<T> {
-    data: T;
+export const getStudents: (token: string) => Promise<StudentProps[]> = token => {
+    return withLogs(axios.get(studentUrl, authConfig(token)), 'getStudents');
 }
 
-function withLogs<T>(promise: Promise<ResponseProps<T>>, fnName: string): Promise<T> {
-    log(`${fnName} - started`);
-    return promise
-        .then(res => {
-            log(`${fnName} - succeeded`);
-            return Promise.resolve(res.data);
-        })
-        .catch(err => {
-            log(`${fnName} - failed`);
-            return Promise.reject(err);
-        });
+export const createStudent: (token: string, student: StudentProps) => Promise<StudentProps[]> = (token, student) => {
+    return withLogs(axios.post(studentUrl, student, authConfig(token)), 'createStudent');
 }
 
-const config = {
-    headers: {
-        'Content-Type': 'application/json'
-    }
-};
-
-export const getStudents: () => Promise<StudentProps[]> = () => {
-    return withLogs(axios.get(studentUrl, config), 'getStudents');
+export const updateStudent: (token: string, student: StudentProps) => Promise<StudentProps[]> = (token, student) => {
+    return withLogs(axios.put(`${studentUrl}/${student.id}`, student, authConfig(token)), 'updateStudent');
 }
 
-export const createStudent: (student: StudentProps) => Promise<StudentProps[]> = student => {
-    return withLogs(axios.post(studentUrl, student, config), 'createStudent');
-}
-
-export const updateStudent: (student: StudentProps) => Promise<StudentProps[]> = student => {
-    return withLogs(axios.put(`${studentUrl}/${student.id}`, student, config), 'updateStudent');
-}
-
-export const removeStudent: (student: StudentProps) => Promise<StudentProps[]> = student => {
-    return withLogs(axios.delete(`${studentUrl}/${student.id}`, config), 'deleteStudent');
+export const removeStudent: (token: string, student: StudentProps) => Promise<StudentProps[]> = (token, student) => {
+    return withLogs(axios.delete(`${studentUrl}/${student.id}`, authConfig(token)), 'deleteStudent');
 }
 
 interface MessageData {
@@ -53,10 +29,11 @@ interface MessageData {
     };
 }
 
-export const newWebSocket = (onMessage: (data: MessageData) => void) => {
+export const newWebSocket = (token: string, onMessage: (data: MessageData) => void) => {
     const ws = new WebSocket(`ws://${baseUrl}`)
     ws.onopen = () => {
         log('web socket onopen');
+        ws.send(JSON.stringify({ type: 'authorization', payload: { token } }));
     };
     ws.onclose = () => {
         log('web socket onclose');
