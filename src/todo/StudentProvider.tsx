@@ -80,7 +80,7 @@ const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
                     students2.splice(index2, 1);
                     log(`reducer-delete5, student: ${students2.length}`);
                 }
-                return { ...state, students2, saving: false };
+                return { ...state, students:students2, saving: false };
             case DELETE_STUDENT_FAILED:
                 return { ...state, savingError: payload.error, saving: false };
             default:
