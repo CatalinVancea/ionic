@@ -4,7 +4,7 @@ import { authConfig, baseUrl, getLogger, withLogs } from '../core';
 
 const log = getLogger('StudentApi');
 
-const studentUrl = `http://${baseUrl}/student`;
+const studentUrl = `http://${baseUrl}/api/student`;
 
 export const getStudents: (token: string) => Promise<StudentProps[]> = token => {
     return withLogs(axios.get(studentUrl, authConfig(token)), 'getStudents');
@@ -42,7 +42,15 @@ export const newWebSocket = (token: string, onMessage: (data: MessageData) => vo
         log('web socket onerror', error);
     };
     ws.onmessage = messageEvent => {
+        log('wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww');
         log('web socket onmessage');
+        log(messageEvent.data);
+        log(JSON.parse(messageEvent.data));
+        const message = JSON.parse(messageEvent.data)
+        log(message.event);
+        log(JSON.parse(message.payload));
+
+
         onMessage(JSON.parse(messageEvent.data));
     };
     return () => {

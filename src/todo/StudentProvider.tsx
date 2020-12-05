@@ -55,9 +55,12 @@ const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
                 const students = [...(state.students || [])];
                 const student = payload.student;
                 const index = students.findIndex(it => it.id === student.id);
+                log(`/////////////////////////////////////////////////////`);
+                log(index);
                 if (index === -1) {
                     students.splice(0, 0, student);
                 } else {
+                    log(`/////////////////////////////////////////////////////`);
                     log(`reducer, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
                     students[index] = student;
                 }
@@ -172,13 +175,24 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
                 return;
             }
             const { event, payload: { student }} = message;
-            log(`ws message, student ${event} ${student.graduated}`);
+            console.log('--------------------------------------------')
+            console.log('--------------------------------------------')
+            console.log('--------------------------------------------')
+            console.log('--------------------------------------------')
+            console.log('event: '+event)
+            console.log('event: '+student)
+            //log(`ws message, student ${event} ${student.graduated}`);
+            //log(`ws message, student ${event} ${student.grade}`);
+            //log(`ws message, student ${event} ${student.enrollment}`);
             if (event === 'created' || event === 'updated') {
-                // log(`wsEffect, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
+                //log(`wsEffect, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
+                console.log('======================================')
                 dispatch({ type: SAVE_STUDENT_SUCCEEDED, payload: { student } });
+
             }
             if (event === 'deleted') {
                 // log(`wsEffect deleted, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
+                console.log('+++++++++++++++++++++++++++++++++++++++++++')
                 dispatch({ type: DELETE_STUDENT_SUCCEEDED, payload: { student } });
             }
         });
