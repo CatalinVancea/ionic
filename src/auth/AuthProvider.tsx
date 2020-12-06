@@ -6,6 +6,7 @@ import { Plugins } from '@capacitor/core';
 const log = getLogger('AuthProvider');
 
 type LoginFn = (username?: string, password?: string) => void;
+type LogoutFn = () => void;
 type TokenGetFn = () => void;
 
 export interface AuthState {
@@ -13,6 +14,7 @@ export interface AuthState {
   isAuthenticated: boolean;
   isAuthenticating: boolean;
   login?: LoginFn;
+  logout?: LogoutFn;
   getTokenStorage?: TokenGetFn;
   pendingAuthentication?: boolean;
   username?: string;
@@ -39,15 +41,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [state, setState] = useState<AuthState>(initialState);
   const { isAuthenticated, isAuthenticating, authenticationError, pendingAuthentication, token } = state;
   const login = useCallback<LoginFn>(loginCallback, []);
+  const logout = useCallback<LogoutFn>(logOutCallback, []);
   const getTokenStorage = useCallback<TokenGetFn>(getTokenStorageCallBack, []);
   useEffect(authenticationEffect, [pendingAuthentication]);
-  const value = { isAuthenticated, login, isAuthenticating, authenticationError, token, getTokenStorage};
+  const value = { isAuthenticated, login, logout, isAuthenticating, authenticationError, token, getTokenStorage};
   log('render');
   return (
     <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
+
+  function logOutCallback(): void {
+    log('logout');
+
+    (async () => {
+      const { Storage } = Plugins;
+
+      await Storage.remove({ key: 'token' });
+
+      console.log('token is deleted from local storage');
+    })();
+
+    setState(initialState);
+  }
 
   function loginCallback(username?: string, password?: string): void {
     log('login');

@@ -14,7 +14,7 @@ interface LoginState {
 
 export const Login: React.FC<RouteComponentProps> = ({ history }) => {
     log("LoginLoginLogin")
-  const { isAuthenticated, isAuthenticating, login, authenticationError, getTokenStorage } = useContext(AuthContext);
+  const { isAuthenticated, isAuthenticating, login, logout, authenticationError, getTokenStorage } = useContext(AuthContext);
   const [state, setState] = useState<LoginState>({});
   const { username, password } = state;
   const handleLogin = () => {

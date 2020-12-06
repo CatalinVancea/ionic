@@ -9,23 +9,34 @@ import {
     IonList, IonLoading,
     IonPage,
     IonTitle,
-    IonToolbar
+    IonToolbar,
+    IonButton
 } from '@ionic/react';
 import { add, removeCircle, reload} from 'ionicons/icons';
 import Student from './Student';
 import { getLogger } from '../core';
 import { StudentContext } from './StudentProvider';
+import {AuthContext} from "../auth";
 
 const log = getLogger('StudentList');
 
 export const StudentList: React.FC<RouteComponentProps> = ({ history }) => {
     const { students, fetching, fetchingError } = useContext(StudentContext);
+    const { logout } = useContext(AuthContext);
     log('render');
     return (
         <IonPage>
             <IonHeader>
                 <IonToolbar>
                     <IonTitle>My App</IonTitle>
+
+                    <IonButton color="primary" onClick={() => {
+                            log("try to logout");
+                            logout?.()
+                            history.push('/login')}}>
+                        Logout
+                    </IonButton>
+
                 </IonToolbar>
             </IonHeader>
             <IonContent>
