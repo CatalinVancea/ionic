@@ -1,21 +1,80 @@
 import axios from 'axios';
 import { StudentProps } from './StudentProps';
 import { authConfig, baseUrl, getLogger, withLogs } from '../core';
+import { Plugins } from "@capacitor/core";
+const { Storage } = Plugins;
 
 const log = getLogger('StudentApi');
 
 const studentUrl = `http://${baseUrl}/api/student`;
 
 export const getStudents: (token: string) => Promise<StudentProps[]> = token => {
-    return withLogs(axios.get(studentUrl, authConfig(token)), 'getStudents');
+    var result = axios.get(studentUrl, authConfig(token))
+
+    result.then(async result => {
+        for (const student of result.data) {
+            await Storage.set({
+                key: student.id!,
+                value: JSON.stringify({
+                    id: student.id,
+                    name: student.name,
+                    grade: student.grade,
+                    graduated: student.graduated,
+                    enrollment: student.enrollment,
+                    version: student.version
+                }),
+            });
+        }
+    });
+
+    return withLogs(result, 'getStudents');
+}
+
+export const getStudentsPaging: (token: string) => Promise<StudentProps[]> = token => {
+    return withLogs(axios.get(`${studentUrl}/paging`, authConfig(token)), 'getStudents');
 }
 
 export const createStudent: (token: string, student: StudentProps) => Promise<StudentProps[]> = (token, student) => {
-    return withLogs(axios.post(studentUrl, student, authConfig(token)), 'createStudent');
+    var result = axios.post(studentUrl, student, authConfig(token))
+
+    result.then(async result => {
+        var student = result.data
+        await Storage.set({
+            key: student.id!,
+            value: JSON.stringify({
+                id: student.id,
+                name: student.name,
+                grade: student.grade,
+                graduated: student.graduated,
+                enrollment: student.enrollment,
+                version: student.version
+            }),
+        });
+    });
+
+    return withLogs(result, 'createStudent');
 }
 
 export const updateStudent: (token: string, student: StudentProps) => Promise<StudentProps[]> = (token, student) => {
-    return withLogs(axios.put(`${studentUrl}/${student.id}`, student, authConfig(token)), 'updateStudent');
+
+    var result = axios.put(`${studentUrl}/${student.id}`, student, authConfig(token))
+
+        result.then(async result => {
+        var student = result.data
+        await Storage.set({
+            key: student.id!,
+            value: JSON.stringify({
+                id: student.id,
+                name: student.name,
+                grade: student.grade,
+                graduated: student.graduated,
+                enrollment: student.enrollment,
+                version: student.version
+                }),
+            });
+        });
+
+    return withLogs(result, 'updateStudent');
 }
 
 export const removeStudent: (token: string, student: StudentProps) => Promise<StudentProps[]> = (token, student) => {

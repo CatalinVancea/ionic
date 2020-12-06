@@ -9,7 +9,7 @@ interface StudentPropsExt extends StudentProps {
 const Student: React.FC<StudentPropsExt> = ({ id, name, onEdit}) => {
     return (
         <IonItem onClick={() => onEdit(id)}>
-            <IonLabel>{name}</IonLabel>
+            <IonLabel>{id + " " + name}</IonLabel>
         </IonItem>
     );
 };

@@ -2,13 +2,14 @@ import React, { useCallback, useContext, useEffect, useReducer } from 'react';
 import PropTypes from 'prop-types';
 import { getLogger } from '../core';
 import { StudentProps } from './StudentProps';
-import { createStudent, getStudents, newWebSocket, updateStudent, removeStudent } from './StudentApi';
+import {createStudent, getStudents, newWebSocket, updateStudent, removeStudent, getStudentsPaging} from './StudentApi';
 import { AuthContext } from '../auth';
 
 const log = getLogger('StudentProvider');
 
 type SaveStudentFn = (student: StudentProps) => Promise<any>;
 type DeleteStudentFn = (student: StudentProps) => Promise<any>;
+type FetchStudentPagingFn = (indexx: bigint) => Promise<any>;
 
 export interface StudentsState {
     students?: StudentProps[],
@@ -18,6 +19,7 @@ export interface StudentsState {
     savingError?: Error | null,
     saveStudent?: SaveStudentFn,
     deleteStudent?: DeleteStudentFn,
+    fetchStudentPaging?: FetchStudentPagingFn,
 }
 
 interface ActionProps {
@@ -39,19 +41,25 @@ const SAVE_STUDENT_FAILED = 'SAVE_STUDENT_FAILED';
 const DELETE_STUDENT_STARTED = 'DELETE_STUDENT_STARTED';
 const DELETE_STUDENT_SUCCEEDED = 'DELETE_STUDENT_SUCCEEDED';
 const DELETE_STUDENT_FAILED = 'DELETE_STUDENT_FAILED';
+const FETCH_STUDENTS_PAGING = 'FETCH_STUDENTS_PAGING';
 
 const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
     (state, { type, payload }) => {
         switch (type) {
             case FETCH_STUDENTS_STARTED:
+                log('FETCH_STUDENTS_STARTED');
                 return { ...state, fetching: true, fetchingError: null };
             case FETCH_STUDENTS_SUCCEEDED:
+                log('FETCH_STUDENTS_SUCCEEDED');
                 return { ...state, students: payload.students, fetching: false };
             case FETCH_STUDENTS_FAILED:
+                log('FETCH_STUDENTS_FAILED');
                 return { ...state, fetchingError: payload.error, fetching: false };
             case SAVE_STUDENT_STARTED:
+                log('SAVE_STUDENT_STARTED');
                 return { ...state, savingError: null, saving: true };
             case SAVE_STUDENT_SUCCEEDED:
+                log('SAVE_STUDENT_SUCCEEDED');
                 const students = [...(state.students || [])];
                 const student = payload.student;
                 const index = students.findIndex(it => it.id === student.id);
@@ -66,10 +74,13 @@ const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
                 }
                 return { ...state, students:students, saving: false };
             case SAVE_STUDENT_FAILED:
+                log('SAVE_STUDENT_FAILED');
                 return { ...state, savingError: payload.error, saving: false };
             case DELETE_STUDENT_STARTED:
+                log('DELETE_STUDENT_STARTED');
                 return { ...state, savingError: null, saving: true };
             case DELETE_STUDENT_SUCCEEDED:
+                log('DELETE_STUDENT_SUCCEEDED');
                 const students2 = [...(state.students || [])];
                 const student2 = payload.student;
                 const index2 = students2.findIndex(it => it.id === student2.id);
@@ -86,7 +97,26 @@ const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
                 }
                 return { ...state, students:students2, saving: false };
             case DELETE_STUDENT_FAILED:
+                log('DELETE_STUDENT_FAILED');
                 return { ...state, savingError: payload.error, saving: false };
+            case FETCH_STUDENTS_PAGING:
+                //log('FETCH_STUDENTS_PAGING1');
+                let studentsAll = [...(state.students || [])];
+                const studentsPaging = payload.student;
+                //log('FETCH_STUDENTS_PAGING2'+studentsAll.length)
+                //studentsAll.concat(studentsPaging);
+
+                studentsAll = [...studentsAll, ...studentsAll];
+
+                //studentsAll.splice(0, 0, studentsPaging);
+                //log('FETCH_STUDENTS_PAGING3'+studentsAll.length)
+                //log('FETCH_STUDENTS_PAGING4'+studentsPaging.length)
+                //log('FETCH_STUDENTS_PAGING5'+studentsPaging)
+                //log('FETCH_STUDENTS_PAGING6'+studentsAll)
+
+
+                //log('FETCH_STUDENTS_PAGING7');
+                return { ...state, students:studentsAll, saving: false, fetching: true };
             default:
                 return state;
         }
@@ -106,8 +136,9 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
     useEffect(wsEffect, [token]);
     const saveStudent = useCallback<SaveStudentFn>(saveStudentCallback, [token]);
     const deleteStudent = useCallback<DeleteStudentFn>(deleteStudentCallback, [token]);
-    const value = { students, fetching, fetchingError, saving, savingError, saveStudent, deleteStudent};
-    log('returns');
+    const fetchStudentPaging = useCallback<FetchStudentPagingFn>(getStudentsEffectPaging, [token]);
+    const value = { students, fetching, fetchingError, saving, savingError, saveStudent, deleteStudent, fetchStudentPaging};
+    log('returns')
 
     return (
         <StudentContext.Provider value={value}>
@@ -115,7 +146,51 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
         </StudentContext.Provider>
     );
 
+    async function getStudentsEffectPaging() {
+        let canceled = false;
+        await fetchStudentsPaging();
+        return () => {
+            canceled = true;
+        }
+
+        async function fetchStudentsPaging() {
+            if (!token?.trim()) {
+                return;
+            }
+            try {
+                log('fetchStudentsPaging started');
+                dispatch({ type: FETCH_STUDENTS_STARTED });
+                const students = await getStudentsPaging(token);
+                log("fetchStudentsPaging2")
+                log('fetchStudentsPaging succeeded');
+                dispatch({ type: FETCH_STUDENTS_PAGING, payload: { students } });
+
+
+
+
+                log("fetchStudentsPaging3")
+                log("fetchStudentsPaging4"+fetching)
+
+                if (students && students.length > 0) {
+                    if(students.length<3)
+                        return true;
+                    else
+                        return false;
+                    //setDisableInfiniteScroll(students.length < 3);
+                } else {
+                    //setDisableInfiniteScroll(true);
+                    return true;
+                }
+
+            } catch (error) {
+                log('fetchStudentsPaging failed');
+                dispatch({ type: FETCH_STUDENTS_FAILED, payload: { error } });
+            }
+        }
+    }
+
     function getStudentsEffect() {
+        log('getStudentsEffect');
         let canceled = false;
         fetchStudents();
         return () => {
