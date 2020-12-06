@@ -24,9 +24,7 @@ export const removeStudent: (token: string, student: StudentProps) => Promise<St
 
 interface MessageData {
     event: string;
-    payload: {
-        student: StudentProps;
-    };
+    payload: StudentProps;
 }
 
 export const newWebSocket = (token: string, onMessage: (data: MessageData) => void) => {
@@ -42,14 +40,15 @@ export const newWebSocket = (token: string, onMessage: (data: MessageData) => vo
         log('web socket onerror', error);
     };
     ws.onmessage = messageEvent => {
-        log('wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww');
         log('web socket onmessage');
-        log(messageEvent.data);
-        log(JSON.parse(messageEvent.data));
-        const message = JSON.parse(messageEvent.data)
-        log(message.event);
-        log(JSON.parse(message.payload));
 
+        log("ApiApiApiApiApiApiApiApiApiApiApiApiApiApiApiApiApiApiApiApi")
+        const message = JSON.parse(messageEvent.data);
+        const { event, payload: item } = message;
+        log(message);
+        log(event);
+        log(item);
+        log(item.name);
 
         onMessage(JSON.parse(messageEvent.data));
     };

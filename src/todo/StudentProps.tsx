@@ -4,4 +4,5 @@ export interface StudentProps {
     graduated?: boolean;
     grade?: number;
     enrollment?: string;
+    version?: string;
 }

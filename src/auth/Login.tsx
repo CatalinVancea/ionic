@@ -13,7 +13,8 @@ interface LoginState {
 }
 
 export const Login: React.FC<RouteComponentProps> = ({ history }) => {
-  const { isAuthenticated, isAuthenticating, login, authenticationError } = useContext(AuthContext);
+    log("LoginLoginLogin")
+  const { isAuthenticated, isAuthenticating, login, authenticationError, getTokenStorage } = useContext(AuthContext);
   const [state, setState] = useState<LoginState>({});
   const { username, password } = state;
   const handleLogin = () => {
@@ -21,9 +22,19 @@ export const Login: React.FC<RouteComponentProps> = ({ history }) => {
     login?.(username, password);
   };
   log('render');
+
+
+
+
   if (isAuthenticated) {
     return <Redirect to={{ pathname: '/' }} />
   }
+
+    if (getTokenStorage) {
+        getTokenStorage?.();
+    }
+
+
   return (
     <IonPage>
       <IonHeader>

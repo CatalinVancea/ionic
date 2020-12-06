@@ -61,10 +61,10 @@ const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
                     students.splice(0, 0, student);
                 } else {
                     log(`/////////////////////////////////////////////////////`);
-                    log(`reducer, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
+                    log(`reducer, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}   ${student.version}`);
                     students[index] = student;
                 }
-                return { ...state, students, saving: false };
+                return { ...state, students:students, saving: false };
             case SAVE_STUDENT_FAILED:
                 return { ...state, savingError: payload.error, saving: false };
             case DELETE_STUDENT_STARTED:
@@ -145,9 +145,10 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
         try {
             log('saveStudent started');
             dispatch({ type: SAVE_STUDENT_STARTED });
+            log(`saveStudent, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
             const savedStudent = await (student.id ? updateStudent(token, student) : createStudent(token, student));
             log('saveStudent succeeded');
-            dispatch({ type: SAVE_STUDENT_SUCCEEDED, payload: { student: savedStudent } });
+            //dispatch({ type: SAVE_STUDENT_SUCCEEDED, payload: { student: savedStudent } });
         } catch (error) {
             log('saveStudent failed');
             dispatch({ type: SAVE_STUDENT_FAILED, payload: { error } });
@@ -174,25 +175,15 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
             if (canceled) {
                 return;
             }
-            const { event, payload: { student }} = message;
-            console.log('--------------------------------------------')
-            console.log('--------------------------------------------')
-            console.log('--------------------------------------------')
-            console.log('--------------------------------------------')
-            console.log('event: '+event)
-            console.log('event: '+student)
-            //log(`ws message, student ${event} ${student.graduated}`);
-            //log(`ws message, student ${event} ${student.grade}`);
-            //log(`ws message, student ${event} ${student.enrollment}`);
+            const { event, payload:  student } = message;
             if (event === 'created' || event === 'updated') {
-                //log(`wsEffect, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
-                console.log('======================================')
+                log("------------------------------------------------------")
+                log(`wsEffect created/updated, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
                 dispatch({ type: SAVE_STUDENT_SUCCEEDED, payload: { student } });
-
             }
             if (event === 'deleted') {
-                // log(`wsEffect deleted, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
-                console.log('+++++++++++++++++++++++++++++++++++++++++++')
+                log("------------------------------------------------------")
+                log(`wsEffect deleted, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
                 dispatch({ type: DELETE_STUDENT_SUCCEEDED, payload: { student } });
             }
         });

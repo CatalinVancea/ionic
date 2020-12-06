@@ -2,16 +2,18 @@ import React, { useCallback, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { getLogger } from '../core';
 import { login as loginApi } from './authApi';
-
+import { Plugins } from '@capacitor/core';
 const log = getLogger('AuthProvider');
 
 type LoginFn = (username?: string, password?: string) => void;
+type TokenGetFn = () => void;
 
 export interface AuthState {
   authenticationError: Error | null;
   isAuthenticated: boolean;
   isAuthenticating: boolean;
   login?: LoginFn;
+  getTokenStorage?: TokenGetFn;
   pendingAuthentication?: boolean;
   username?: string;
   password?: string;
@@ -33,11 +35,13 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  log('AuthAuthAuth')
   const [state, setState] = useState<AuthState>(initialState);
   const { isAuthenticated, isAuthenticating, authenticationError, pendingAuthentication, token } = state;
   const login = useCallback<LoginFn>(loginCallback, []);
+  const getTokenStorage = useCallback<TokenGetFn>(getTokenStorageCallBack, []);
   useEffect(authenticationEffect, [pendingAuthentication]);
-  const value = { isAuthenticated, login, isAuthenticating, authenticationError, token };
+  const value = { isAuthenticated, login, isAuthenticating, authenticationError, token, getTokenStorage};
   log('render');
   return (
     <AuthContext.Provider value={value}>
@@ -55,6 +59,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     });
   }
 
+  function setTokenStorageCallBack(token: string){
+    log('setTokenStorageCallBack');
+    (async () => {
+      const { Storage } = Plugins;
+
+      // Saving ({ key: string, value: string }) => Promise<void>
+      await Storage.set({
+        key: 'token',
+        value: JSON.stringify({
+          token: token
+        })
+      });
+      console.log('token is setted in local storage');
+    })();
+  }
+
+  function getTokenStorageCallBack(){
+    log('getTokenStorageCallBack');
+    (async () => {
+      const { Storage } = Plugins;
+
+      // Loading value by key ({ key: string }) => Promise<{ value: string | null }>
+      const res = await Storage.get({ key: 'token' });
+      if (res.value) {
+        const token = JSON.parse(res.value).token;
+
+        setState({
+          ...state,
+          token,
+          pendingAuthentication: false,
+          isAuthenticated: true,
+          isAuthenticating: false,
+        });
+
+        console.log('token found', JSON.parse(res.value));
+      } else {
+        console.log('token not found');
+      }
+
+    })();
+  }
+
   function authenticationEffect() {
     let canceled = false;
     authenticate();
@@ -68,6 +114,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return;
       }
       try {
+        log('get token from local storage...');
+        getTokenStorageCallBack();
+        if(state.token){
+          log('token is in local storage');
+          return;
+        }else
+        {
+          log('token is not in local storage');
+        }
+
+
         log('authenticate...');
         setState({
           ...state,
@@ -86,6 +143,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           isAuthenticated: true,
           isAuthenticating: false,
         });
+        await setTokenStorageCallBack(token);
+
+
       } catch (error) {
         if (canceled) {
           return;
