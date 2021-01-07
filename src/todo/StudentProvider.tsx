@@ -4,12 +4,20 @@ import { getLogger } from '../core';
 import { StudentProps } from './StudentProps';
 import {createStudent, getStudents, newWebSocket, updateStudent, removeStudent, getStudentsPaging} from './StudentApi';
 import { AuthContext } from '../auth';
+import {useNetwork} from "./useNetwork";
+import {Plugins} from "@capacitor/core";
 
 const log = getLogger('StudentProvider');
 
 type SaveStudentFn = (student: StudentProps) => Promise<any>;
 type DeleteStudentFn = (student: StudentProps) => Promise<any>;
 type FetchStudentPagingFn = (indexx: bigint) => Promise<any>;
+
+type GetStudentDBFn = (studentId: string) => Promise<any>;
+type SaveStudentDBFn = (student: StudentProps) => Promise<any>;
+type DeleteStudentsDBFn = () => Promise<any>;
+type DeleteStudentDBFn = (studentId: string) => Promise<any>;
+
 
 export interface StudentsState {
     students?: StudentProps[],
@@ -129,15 +137,23 @@ interface StudentProviderProps {
 }
 
 export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) => {
+    const { networkStatus } = useNetwork();
     const { token } = useContext(AuthContext);
     const [state, dispatch] = useReducer(reducer, initialState);
     const { students, fetching, fetchingError, saving, savingError } = state;
     useEffect(getStudentsEffect, [token]);
     useEffect(wsEffect, [token]);
+    useEffect(resolveVersionConflict, [networkStatus.connected]);
     const saveStudent = useCallback<SaveStudentFn>(saveStudentCallback, [token]);
     const deleteStudent = useCallback<DeleteStudentFn>(deleteStudentCallback, [token]);
     const fetchStudentPaging = useCallback<FetchStudentPagingFn>(getStudentsEffectPaging, [token]);
     const value = { students, fetching, fetchingError, saving, savingError, saveStudent, deleteStudent, fetchStudentPaging};
+
+    const saveStudentDB = useCallback<SaveStudentDBFn>(saveStudentDBCallback, []);
+    const deleteStudentDB = useCallback<DeleteStudentDBFn>(deleteStudentDBCallback, []);
+    const getStudentDB = useCallback<GetStudentDBFn>(getStudentDBCallback, []);
+    const deleteStudentsDB = useCallback<DeleteStudentsDBFn>(deleteStudentsDBCallback, []);
+
     log('returns')
 
     return (
@@ -216,17 +232,31 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
         }
     }
 
+    function resolveVersionConflict() {
+
+        if (networkStatus.connected) {
+
+        }else{
+
+        }
+    }
+
     async function saveStudentCallback(student: StudentProps) {
-        try {
-            log('saveStudent started');
-            dispatch({ type: SAVE_STUDENT_STARTED });
-            log(`saveStudent, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
-            const savedStudent = await (student.id ? updateStudent(token, student) : createStudent(token, student));
-            log('saveStudent succeeded');
-            //dispatch({ type: SAVE_STUDENT_SUCCEEDED, payload: { student: savedStudent } });
-        } catch (error) {
-            log('saveStudent failed');
-            dispatch({ type: SAVE_STUDENT_FAILED, payload: { error } });
+
+        if (networkStatus.connected) {
+            try {
+                log('saveStudent started');
+                dispatch({ type: SAVE_STUDENT_STARTED });
+                log(`saveStudent, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
+                const savedStudent = await (student.id ? updateStudent(token, student) : createStudent(token, student));
+                log('saveStudent succeeded');
+                //dispatch({ type: SAVE_STUDENT_SUCCEEDED, payload: { student: savedStudent } });
+            } catch (error) {
+                log('saveStudent failed');
+                dispatch({ type: SAVE_STUDENT_FAILED, payload: { error } });
+            }
+        }else{
+            saveStudentDBCallback(student)
         }
     }
 
@@ -267,5 +297,61 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
             canceled = true;
             closeWebSocket();
         }
+    }
+
+    async function saveStudentDBCallback(student: StudentProps) {
+        log('setStudentStorageCallBack');
+        (async () => {
+            const { Storage } = Plugins;
+
+            // Saving ({ key: string, value: string }) => Promise<void>
+            await Storage.set({
+                key: student.id || "",
+                value: JSON.stringify({
+                    student: student
+                })
+            });
+            console.log('student is setted in local storage');
+        })();
+    }
+    async function getStudentDBCallback(studentId: string) {
+        log('getStudentDBCallback');
+        (async () => {
+            const { Storage } = Plugins;
+
+            // Loading value by key ({ key: string }) => Promise<{ value: string | null }>
+            const res = await Storage.get({ key: studentId});
+            if (res.value) {
+                console.log('Student found', JSON.parse(res.value));
+            } else {
+                console.log('Student not found');
+            }
+
+            console.log('student is deleted from local storage');
+        })();
+    }
+    async function deleteStudentDBCallback(studentId: string) {
+        log('deleteStudentDBCallback');
+        (async () => {
+            const { Storage } = Plugins;
+
+            console.log('Keys found before remove', await Storage.keys());
+            // Removing value by key, ({ key: string }) => Promise<void>
+            await Storage.remove({ key: studentId });
+            console.log('Keys found after remove', await Storage.keys());
+
+            console.log('student is deleted from local storage');
+        })();
+    }
+    async function deleteStudentsDBCallback() {
+        log('deleteStudentsDBCallback');
+        (async () => {
+            const { Storage } = Plugins;
+
+            // Clear storage () => Promise<void>
+            await Storage.clear();
+
+            console.log('students are deleted from local storage');
+        })();
     }
 };

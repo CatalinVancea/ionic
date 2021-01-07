@@ -10,25 +10,41 @@ import {
     IonPage,
     IonTitle,
     IonToolbar,
-    IonButton
+    IonButton,
 } from '@ionic/react';
-import { add, removeCircle, reload} from 'ionicons/icons';
+import { add, removeCircle, reload, planetOutline, globeOutline} from 'ionicons/icons';
 import Student from './Student';
 import { getLogger } from '../core';
 import { StudentContext } from './StudentProvider';
 import {AuthContext} from "../auth";
+import { useNetwork } from './useNetwork';
 
 const log = getLogger('StudentList');
 
 export const StudentList: React.FC<RouteComponentProps> = ({ history }) => {
     const { students, fetching, fetchingError } = useContext(StudentContext);
     const { logout } = useContext(AuthContext);
+    const { networkStatus } = useNetwork();
     log('render');
     return (
         <IonPage>
             <IonHeader>
                 <IonToolbar>
                     <IonTitle>My App</IonTitle>
+
+                    {(networkStatus.connected==true) && (
+                        <div>
+                            <IonIcon icon={globeOutline} size={"900"} />
+                            <div>You are online</div>
+                        </div>
+                    )}
+
+                    {(networkStatus.connected==false) && (
+                        <div>
+                            <IonIcon icon={planetOutline} size={"900"}/>
+                            <div>You are offline</div>
+                        </div>
+                    )}
 
                     <IonButton color="primary" onClick={() => {
                             log("try to logout");
