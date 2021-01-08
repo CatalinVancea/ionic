@@ -5,4 +5,5 @@ export interface StudentProps {
     grade?: number;
     enrollment?: string;
     version?: string;
+    sync?: boolean;
 }

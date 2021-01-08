@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useReducer } from 'react';
 import PropTypes from 'prop-types';
 import { getLogger } from '../core';
 import { StudentProps } from './StudentProps';
-import {createStudent, getStudents, newWebSocket, updateStudent, removeStudent, getStudentsPaging} from './StudentApi';
+import {createStudent, getStudents, newWebSocket, updateStudent, removeStudent, getStudentsPaging, getStudent} from './StudentApi';
 import { AuthContext } from '../auth';
 import {useNetwork} from "./useNetwork";
 import {Plugins} from "@capacitor/core";
@@ -16,6 +16,7 @@ type FetchStudentPagingFn = (indexx: bigint) => Promise<any>;
 type GetStudentDBFn = (studentId: string) => Promise<any>;
 type SaveStudentDBFn = (student: StudentProps) => Promise<any>;
 type DeleteStudentsDBFn = () => Promise<any>;
+type SyncFunctionFn = () => void;
 type DeleteStudentDBFn = (studentId: string) => Promise<any>;
 
 
@@ -26,8 +27,10 @@ export interface StudentsState {
     saving: boolean,
     savingError?: Error | null,
     saveStudent?: SaveStudentFn,
+    syncFunction?: SyncFunctionFn,
     deleteStudent?: DeleteStudentFn,
     fetchStudentPaging?: FetchStudentPagingFn,
+    lostConnection?: boolean
 }
 
 interface ActionProps {
@@ -152,10 +155,11 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
     useEffect(getStudentsEffect, [token]);
     useEffect(wsEffect, [token]);
     useEffect(resolveVersionConflict, [networkStatus.connected]);
+    const syncFunction = useCallback<SyncFunctionFn>(syncFunctionCallback, [token]);
     const saveStudent = useCallback<SaveStudentFn>(saveStudentCallback, [token]);
     const deleteStudent = useCallback<DeleteStudentFn>(deleteStudentCallback, [token]);
     const fetchStudentPaging = useCallback<FetchStudentPagingFn>(getStudentsEffectPaging, [token]);
-    const value = { students, fetching, fetchingError, saving, savingError, saveStudent, deleteStudent, fetchStudentPaging};
+    const value = { students, fetching, fetchingError, saving, savingError, saveStudent, deleteStudent, fetchStudentPaging, syncFunction};
 
     const saveStudentDB = useCallback<SaveStudentDBFn>(saveStudentDBCallback, []);
     const deleteStudentDB = useCallback<DeleteStudentDBFn>(deleteStudentDBCallback, []);
@@ -210,7 +214,60 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
         }
     }
 
-    function getStudentsEffect() {
+    async function syncFunctionCallback() {
+        console.log("caca")
+        console.log("syncFunctionCallback")
+        console.log("caca")
+        console.log(networkStatus.connected)
+        console.log(state.lostConnection)
+
+
+        if (networkStatus.connected != true || state.lostConnection != false) {
+            await (async () => {
+                const {Storage} = Plugins;
+
+                // Loading keys () => Promise<{ keys: string[] }>
+                const {keys} = await Storage.keys();
+                console.log('Keys found', keys);
+
+                for (let i = 0; i < keys.length; i++) {
+                    let key = keys[i]
+                    if (key != "token") {
+                        let student1: StudentProps = await getStudentDBCallback(key)
+                        let student2: StudentProps = await getStudent(token, student1)
+                        console.log("mmmmmmmmmmmmmmmmmmeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+                        console.log(student1.version)
+                        console.log(student1.sync)
+                        console.log(student2.version)
+                        console.log(student2.sync)
+
+                        if (student1.version == student2.version && student1.sync == false) {
+                            console.log("beeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+                            try {
+                                await (student1.id ? updateStudent(token, student1) : createStudent(token, student1));
+                            } catch (error) {
+
+                            }
+                        }
+                        if (student1.version != student2.version) {
+                            //todo
+                            try {
+                                //await (student1.id ? updateStudent(token, student1) : createStudent(token, student1));
+                            } catch (error) {
+
+                            }
+                        }
+                    }
+                }
+
+                state.lostConnection = false;
+            })();
+        }
+        getStudentsEffect()
+    }
+
+    function getStudentsEffect(){
+        console.log("caca")
         let canceled = false;
         fetchStudents();
         return () => {
@@ -223,12 +280,15 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
             }
             try {
                 log('fetchStudents started');
+
                 dispatch({ type: FETCH_STUDENTS_STARTED });
+
                 const students = await getStudents(token);
 
                 await deleteStudentsDBCallback()
 
                 await students.forEach(async it=>{
+                    it.sync = true
                     await saveStudentDBCallback(it)
                 })
 
@@ -239,6 +299,8 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
             } catch (error) {
                 log('fetchStudents failed');
                 updateStudentsListCallback()
+                state.lostConnection = true
+                log('fetchStudents failed', state.lostConnection);
                 dispatch({ type: FETCH_STUDENTS_FAILED, payload: { error } });
             }
         }
@@ -266,10 +328,13 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
                 //dispatch({ type: SAVE_STUDENT_SUCCEEDED, payload: { student: savedStudent } });
             } catch (error) {
                 log('saveStudent failed');
+                student.sync=false
+                state.lostConnection = true
                 await saveStudentDBCallback(student)
                 dispatch({ type: SAVE_STUDENT_FAILED, payload: { error } });
             }
         }else {
+            state.lostConnection = true
             await saveStudentDBCallback(student)
         }
     }
@@ -295,8 +360,7 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
         let canceled = false;
         log('wsEffect - connecting');
         const closeWebSocket = newWebSocket(token, message => {
-            if(networkStatus.connected == true) {
-                log(networkStatus.connected)
+            if(networkStatus.connected == true && state.lostConnection == null) {
                 if (canceled) {
                     return;
                 }

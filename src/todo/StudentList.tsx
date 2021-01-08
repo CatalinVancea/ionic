@@ -24,7 +24,7 @@ import { useNetwork } from './useNetwork';
 const log = getLogger('StudentList');
 
 export const StudentList: React.FC<RouteComponentProps> = ({ history }) => {
-    const { students, fetching, fetchingError } = useContext(StudentContext);
+    const { students, fetching, fetchingError, syncFunction } = useContext(StudentContext);
     const { logout } = useContext(AuthContext);
     const { networkStatus } = useNetwork();
     log('render');
@@ -63,6 +63,13 @@ export const StudentList: React.FC<RouteComponentProps> = ({ history }) => {
                         Logout
                     </IonButton>
 
+                    <IonButton color="primary" onClick={() => {
+                        log("try to sync");
+                        syncFunction?.()
+                        }}>
+                        Sync
+                    </IonButton>
+
                 </IonToolbar>
             </IonHeader>
             <IonContent>
@@ -70,9 +77,9 @@ export const StudentList: React.FC<RouteComponentProps> = ({ history }) => {
                 {students && (
                     <IonList>
                         {students.map(({ id, name, graduated,
-                                           grade, enrollment}) =>
+                                           grade, enrollment, sync}) =>
                                 <Student key={id} id={id} name={name} grade={grade}
-                                     graduated={graduated} enrollment={enrollment}
+                                     graduated={graduated} enrollment={enrollment} sync={sync}
                                      onEdit={id => history.push(`/student/${id}`)} />
                         )}
                     </IonList>

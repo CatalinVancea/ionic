@@ -81,6 +81,11 @@ export const removeStudent: (token: string, student: StudentProps) => Promise<St
     return withLogs(axios.delete(`${studentUrl}/${student.id}`, authConfig(token)), 'deleteStudent');
 }
 
+export const getStudent: (token: string, student: StudentProps) => Promise<StudentProps> = (token, student) => {
+    return withLogs(axios.get(`${studentUrl}/${student.id}`, authConfig(token)), 'getStudent');
+}
+
+
 interface MessageData {
     event: string;
     payload: StudentProps;
@@ -94,6 +99,7 @@ export const newWebSocket = (token: string, onMessage: (data: MessageData) => vo
     };
     ws.onclose = () => {
         log('web socket onclose');
+
     };
     ws.onerror = error => {
         log('web socket onerror', error);
