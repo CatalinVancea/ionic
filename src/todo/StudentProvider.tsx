@@ -576,7 +576,6 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
 
             // Loading keys () => Promise<{ keys: string[] }>
             const {keys} = await Storage.keys();
-            //log('Keys found', keys);
 
             for (let i = 0; i < keys.length; i++) {
                 let key = keys[i]
