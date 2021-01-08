@@ -14,7 +14,7 @@ import {
     IonDatetime,
     IonFooter,
     IonToggle,
-    IonItemDivider
+    IonItemDivider, IonIcon
 } from '@ionic/react';
 
 
@@ -22,6 +22,7 @@ import { getLogger } from '../core';
 import { StudentContext } from './StudentProvider';
 import { RouteComponentProps } from 'react-router';
 import { StudentProps } from './StudentProps';
+import {globeOutline, logoHackernews} from "ionicons/icons";
 
 const log = getLogger('StudentEdit');
 
@@ -30,8 +31,9 @@ interface StudentEditProps extends RouteComponentProps<{
 }> {}
 
 export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
-    const { students, saving, savingError, saveStudent, deleteStudent } = useContext(StudentContext);
+    const { students, saving, savingError, saveStudent, deleteStudent, forceSaveStudent, syncFunction} = useContext(StudentContext);
     const [name, setName] = useState('');
+    const [showDiv, setShowDiv] = useState(false);
     const [graduated, setGraduated] = useState(Boolean());
     const [grade, setGrade] = useState(Number());
     const [enrollment, setEnrollment] = useState('2012-12-15T13:47:20.789');
@@ -40,17 +42,67 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
         log('useEffect');
         const routeId = match.params.id || '';
         const student = students?.find(it => it.id === routeId);
-        setStudent(student);
         if (student) {
+            setStudent(student);
             setName(student.name);
             setEnrollment(student.enrollment || '');
             setGraduated(student.graduated || Boolean());
             setGrade(student.grade || Number());
         }
     }, [match.params.id, students]);
-    const handleSave = () => {
-        const editedStudent = student ? { ...student, name, graduated, grade, enrollment } : { name, graduated, grade, enrollment };
-        saveStudent && saveStudent(editedStudent).then(() => history.goBack());
+    const handleSave = async () => {
+        log("handleSave: start")
+        const editedStudent = student ? {...student, name, graduated, grade, enrollment} : {
+            name,
+            graduated,
+            grade,
+            enrollment
+        };
+        //saveStudent && saveStudent(editedStudent).then(() => history.goBack());
+
+
+        var c: boolean;
+        c = false;
+
+        if (saveStudent != null) {
+            c = await saveStudent(editedStudent)
+                .then(() => {
+                    log("handleSave: save succeed")
+                    return false;
+                })
+                .catch((error) => {
+                    log("handleSave: Catch Error")
+
+                    if(error == "Error: Network Error"){
+                        log("handleSave: Network Error")
+                        return false;
+                    }
+
+                    if(error == "Error: Version Conflict"){
+                        log("handleSave: Version Conflict")
+                        return true;
+                    }
+                    return false;
+                })
+        }
+        return c;
+        log("handleSave: stop")
+    };
+    const handleForceSave = () => {
+        const editedStudent = student ? {...student, name, graduated, grade, enrollment} : {
+            name,
+            graduated,
+            grade,
+            enrollment
+        };
+        forceSaveStudent && forceSaveStudent(editedStudent).then(() => history.goBack());
+    };
+    const handleSync = () => {
+        if (syncFunction) {
+            syncFunction()
+            history.goBack();
+        }
+
     };
     const handleDelete = () => {
         const deletedStudent = student ? { ...student, name, graduated, grade, enrollment } : { name, graduated, grade, enrollment };
@@ -62,8 +114,39 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
             <IonHeader>
                 <IonToolbar>
                     <IonTitle>Edit</IonTitle>
+
+                    {(showDiv==true) && (
+                        <div  style={{ color: 'red' }}>
+                            <div>Conflict</div>
+                            <IonButtons slot="end">
+                                <IonButton onClick={()=>{handleForceSave()}}>
+                                    Force Save
+                                </IonButton>
+                                <IonButton onClick={()=>{handleSync()}}>
+                                    Featch data
+                                </IonButton>
+                            </IonButtons>
+                        </div>
+                    )}
+
                     <IonButtons slot="end">
-                        <IonButton onClick={handleSave}>
+                        <IonButton onClick={()=>{
+                            if(showDiv==true){
+                                setShowDiv(false)
+                            }else{
+                                setShowDiv(true)
+                            }
+                        }}>
+                            Show Div Test
+                        </IonButton>
+                        <IonButton onClick={async () => {
+                            if (await handleSave() == true) {
+                                setShowDiv(true)
+                            } else {
+                                setShowDiv(false)
+                                history.goBack()
+                            }
+                        }}>
                             Save
                         </IonButton>
                         <IonButton onClick={handleDelete}>

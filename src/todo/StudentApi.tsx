@@ -77,6 +77,29 @@ export const updateStudent: (token: string, student: StudentProps) => Promise<St
     return withLogs(result, 'updateStudent');
 }
 
+export const forceUpdateStudent: (token: string, student: StudentProps) => Promise<StudentProps[]> = (token, student) => {
+
+    var result = axios.put(`${studentUrl}/force/${student.id}`, student, authConfig(token))
+
+    result.then(async result => {
+        var student = result.data
+        await Storage.set({
+            key: student.id!,
+            value: JSON.stringify({
+                id: student.id,
+                name: student.name,
+                grade: student.grade,
+                graduated: student.graduated,
+                enrollment: student.enrollment,
+                version: student.version
+            }),
+        });
+    });
+
+    return withLogs(result, 'updateStudent');
+}
+
+
 export const removeStudent: (token: string, student: StudentProps) => Promise<StudentProps[]> = (token, student) => {
     return withLogs(axios.delete(`${studentUrl}/${student.id}`, authConfig(token)), 'deleteStudent');
 }

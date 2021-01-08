@@ -77,9 +77,9 @@ export const StudentList: React.FC<RouteComponentProps> = ({ history }) => {
                 {students && (
                     <IonList>
                         {students.map(({ id, name, graduated,
-                                           grade, enrollment, sync}) =>
+                                           grade, enrollment, sync, version}) =>
                                 <Student key={id} id={id} name={name} grade={grade}
-                                     graduated={graduated} enrollment={enrollment} sync={sync}
+                                     graduated={graduated} enrollment={enrollment} sync={sync} version={version}
                                      onEdit={id => history.push(`/student/${id}`)} />
                         )}
                     </IonList>
