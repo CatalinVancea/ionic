@@ -50,6 +50,7 @@ const DELETE_STUDENT_STARTED = 'DELETE_STUDENT_STARTED';
 const DELETE_STUDENT_SUCCEEDED = 'DELETE_STUDENT_SUCCEEDED';
 const DELETE_STUDENT_FAILED = 'DELETE_STUDENT_FAILED';
 const FETCH_STUDENTS_PAGING = 'FETCH_STUDENTS_PAGING';
+const UPDATE_STUDENTS_LIST = 'UPDATE_STUDENTS_LIST';
 
 const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
     (state, { type, payload }) => {
@@ -71,12 +72,13 @@ const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
                 const students = [...(state.students || [])];
                 const student = payload.student;
                 const index = students.findIndex(it => it.id === student.id);
-                log(`/////////////////////////////////////////////////////`);
+                log(`/////////////////////////////////////////////////////ppppppppppppppppppppppppppppppppppppppppppppppppppppp`);
+                //log(`pppppppp: `, payload.student);
                 log(index);
                 if (index === -1) {
                     students.splice(0, 0, student);
                 } else {
-                    log(`/////////////////////////////////////////////////////`);
+                    log(`/////////////////////////////////////////////////////pppppppppppppppppppppppppppppppppppppppppppppppp`);
                     log(`reducer, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}   ${student.version}`);
                     students[index] = student;
                 }
@@ -125,6 +127,35 @@ const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
 
                 //log('FETCH_STUDENTS_PAGING7');
                 return { ...state, students:studentsAll, saving: false, fetching: true };
+            case UPDATE_STUDENTS_LIST:
+                console.log("1dispach update start")
+                var studentsUpdate : StudentProps[];
+                studentsUpdate = payload.studentss;
+
+                const studentsUpdate2 = payload.studentss || []
+
+
+                var students33 = [...(state.students || [])];
+                console.log("2dispach update finish", students33)
+                students33.concat(studentsUpdate)
+
+                studentsUpdate.forEach((s)=>{
+                    students33.push(s)
+                    console.log("xdispach update finish", s)
+                })
+
+                students33 = [...students33, ...studentsUpdate]
+
+                console.log("3dispach update finish", students33)
+                console.log("4dispach update finish", studentsUpdate)
+                console.log("5dispach update finish", studentsUpdate2)
+                //return { ...state, students:studentsUpdate, saving: false, fetching: false };
+
+
+
+
+
+                return { ...state, students:students33, saving: false, fetching: false };
             default:
                 return state;
         }
@@ -181,9 +212,6 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
                 log('fetchStudentsPaging succeeded');
                 dispatch({ type: FETCH_STUDENTS_PAGING, payload: { students } });
 
-
-
-
                 log("fetchStudentsPaging3")
                 log("fetchStudentsPaging4"+fetching)
 
@@ -206,7 +234,6 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
     }
 
     function getStudentsEffect() {
-        log('getStudentsEffect');
         let canceled = false;
         fetchStudents();
         return () => {
@@ -221,6 +248,13 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
                 log('fetchStudents started');
                 dispatch({ type: FETCH_STUDENTS_STARTED });
                 const students = await getStudents(token);
+
+                await deleteStudentsDBCallback()
+
+                await students.forEach(async it=>{
+                    await saveStudentDBCallback(it)
+                })
+
                 log('fetchStudents succeeded');
                 if (!canceled) {
                     dispatch({ type: FETCH_STUDENTS_SUCCEEDED, payload: { students } });
@@ -250,13 +284,14 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
                 log(`saveStudent, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
                 const savedStudent = await (student.id ? updateStudent(token, student) : createStudent(token, student));
                 log('saveStudent succeeded');
+                await saveStudentDBCallback(student)
                 //dispatch({ type: SAVE_STUDENT_SUCCEEDED, payload: { student: savedStudent } });
             } catch (error) {
                 log('saveStudent failed');
                 dispatch({ type: SAVE_STUDENT_FAILED, payload: { error } });
             }
-        }else{
-            saveStudentDBCallback(student)
+        }else {
+            // await saveStudentDBCallback(student)
         }
     }
 
@@ -277,19 +312,24 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
         let canceled = false;
         log('wsEffect - connecting');
         const closeWebSocket = newWebSocket(token, message => {
-            if (canceled) {
-                return;
-            }
-            const { event, payload:  student } = message;
-            if (event === 'created' || event === 'updated') {
-                log("------------------------------------------------------")
-                log(`wsEffect created/updated, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
-                dispatch({ type: SAVE_STUDENT_SUCCEEDED, payload: { student } });
-            }
-            if (event === 'deleted') {
-                log("------------------------------------------------------")
-                log(`wsEffect deleted, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
-                dispatch({ type: DELETE_STUDENT_SUCCEEDED, payload: { student } });
+            if(networkStatus.connected == true) {
+                log(networkStatus.connected)
+                if (canceled) {
+                    return;
+                }
+                const {event, payload: student} = message;
+                if (event === 'created' || event === 'updated') {
+                    log("------------------------------------------------------")
+                    log(`wsEffect created/updated, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
+                    dispatch({type: SAVE_STUDENT_SUCCEEDED, payload: {student}});
+                    saveStudentDBCallback(student)
+                }
+                if (event === 'deleted') {
+                    log("------------------------------------------------------")
+                    log(`wsEffect deleted, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
+                    dispatch({type: DELETE_STUDENT_SUCCEEDED, payload: {student}});
+                    deleteStudentDBCallback(student.id || "")
+                }
             }
         });
         return () => {
@@ -300,9 +340,11 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
     }
 
     async function saveStudentDBCallback(student: StudentProps) {
-        log('setStudentStorageCallBack');
-        (async () => {
+        log('saveStudentDBCallback');
+        await (async () => {
             const { Storage } = Plugins;
+
+            console.log('Keys found before set', await Storage.keys());
 
             // Saving ({ key: string, value: string }) => Promise<void>
             await Storage.set({
@@ -311,45 +353,92 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
                     student: student
                 })
             });
+            console.log('Keys found after set', await Storage.keys());
             console.log('student is setted in local storage');
+            await updateStudentsListCallback()
         })();
     }
     async function getStudentDBCallback(studentId: string) {
         log('getStudentDBCallback');
-        (async () => {
+        var student:StudentProps
+        student = await (async (studentId) => {
             const { Storage } = Plugins;
 
             // Loading value by key ({ key: string }) => Promise<{ value: string | null }>
             const res = await Storage.get({ key: studentId});
             if (res.value) {
                 console.log('Student found', JSON.parse(res.value));
+
+                let {student: student2} = JSON.parse(res.value)
+                return student2
+
             } else {
                 console.log('Student not found');
             }
 
             console.log('student is deleted from local storage');
-        })();
+        })(studentId);
+        return student
     }
     async function deleteStudentDBCallback(studentId: string) {
         log('deleteStudentDBCallback');
-        (async () => {
-            const { Storage } = Plugins;
+        await (async (studentId) => {
+            const {Storage} = Plugins;
 
             console.log('Keys found before remove', await Storage.keys());
             // Removing value by key, ({ key: string }) => Promise<void>
-            await Storage.remove({ key: studentId });
+            await Storage.remove({key: studentId});
             console.log('Keys found after remove', await Storage.keys());
 
             console.log('student is deleted from local storage');
-        })();
+        })(studentId);
     }
     async function deleteStudentsDBCallback() {
         log('deleteStudentsDBCallback');
-        (async () => {
-            const { Storage } = Plugins;
+        await (async () => {
+            const {Storage} = Plugins;
 
-            // Clear storage () => Promise<void>
-            await Storage.clear();
+            console.log('Keys found before delete', await Storage.keys());
+            const {keys} = await Storage.keys();
+            keys.forEach(async (key) => {
+                if (key != "token") {
+                    await deleteStudentDBCallback(key)
+                }
+            })
+            console.log('Keys found after delete', await Storage.keys());
+
+            console.log('students are deleted from local storage');
+        })();
+    }
+    async function updateStudentsListCallback() {
+
+        log('deleteStudentsDBCallback');
+        await (async () => {
+            const {Storage} = Plugins;
+
+            var studentss: StudentProps[];
+            studentss = []
+
+            // Loading keys () => Promise<{ keys: string[] }>
+            const {keys} = await Storage.keys();
+            console.log('Keys found', keys);
+
+            await keys.forEach(async key=>{
+
+                if(key != "token"){
+                let student = await getStudentDBCallback(key)
+                console.log("I found this student:", student)
+                console.log("I found this studentss:", studentss)
+
+                    //studentss = studentss.splice(0,0, student);
+                    studentss.push(student);
+                    //studentss.splice(0,0,student);
+                }
+            })
+
+            console.log("-----------------------------------cacacacacaacaac")
+            console.log("I send this studentss:", studentss)
+            dispatch({type: UPDATE_STUDENTS_LIST, payload: {studentss}});
 
             console.log('students are deleted from local storage');
         })();

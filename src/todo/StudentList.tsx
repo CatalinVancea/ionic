@@ -12,6 +12,8 @@ import {
     IonToolbar,
     IonButton,
 } from '@ionic/react';
+
+
 import { add, removeCircle, reload, planetOutline, globeOutline} from 'ionicons/icons';
 import Student from './Student';
 import { getLogger } from '../core';
@@ -34,6 +36,7 @@ export const StudentList: React.FC<RouteComponentProps> = ({ history }) => {
 
                     {(networkStatus.connected==true) && (
                         <div>
+                            <IonIcon icon="add-outline"></IonIcon>
                             <IonIcon icon={globeOutline} size={"900"} />
                             <div>You are online</div>
                         </div>
