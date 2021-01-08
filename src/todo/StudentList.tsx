@@ -49,6 +49,13 @@ export const StudentList: React.FC<RouteComponentProps> = ({ history }) => {
                         </div>
                     )}
 
+                    {fetchingError && (
+                        <div>
+                            <div>{fetchingError.message || 'Failed to fetch students'}</div>
+                            <div>{'You are not sync!'}</div>
+                        </div>
+                    )}
+
                     <IonButton color="primary" onClick={() => {
                             log("try to logout");
                             logout?.()
@@ -70,9 +77,7 @@ export const StudentList: React.FC<RouteComponentProps> = ({ history }) => {
                         )}
                     </IonList>
                 )}
-                {fetchingError && (
-                    <div>{fetchingError.message || 'Failed to fetch students'}</div>
-                )}
+
                 <IonFab vertical="bottom" horizontal="end" slot="fixed">
                     <IonFabButton onClick={() => history.push('/student')}>
                         <IonIcon icon={add} />

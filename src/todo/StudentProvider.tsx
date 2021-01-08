@@ -128,34 +128,11 @@ const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
                 //log('FETCH_STUDENTS_PAGING7');
                 return { ...state, students:studentsAll, saving: false, fetching: true };
             case UPDATE_STUDENTS_LIST:
-                console.log("1dispach update start")
+                console.log("UPDATE_STUDENTS_LIST")
                 var studentsUpdate : StudentProps[];
                 studentsUpdate = payload.studentss;
 
-                const studentsUpdate2 = payload.studentss || []
-
-
-                var students33 = [...(state.students || [])];
-                console.log("2dispach update finish", students33)
-                students33.concat(studentsUpdate)
-
-                studentsUpdate.forEach((s)=>{
-                    students33.push(s)
-                    console.log("xdispach update finish", s)
-                })
-
-                students33 = [...students33, ...studentsUpdate]
-
-                console.log("3dispach update finish", students33)
-                console.log("4dispach update finish", studentsUpdate)
-                console.log("5dispach update finish", studentsUpdate2)
-                //return { ...state, students:studentsUpdate, saving: false, fetching: false };
-
-
-
-
-
-                return { ...state, students:students33, saving: false, fetching: false };
+                return { ...state, students:studentsUpdate, saving: false, fetching: false };
             default:
                 return state;
         }
@@ -261,6 +238,7 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
                 }
             } catch (error) {
                 log('fetchStudents failed');
+                updateStudentsListCallback()
                 dispatch({ type: FETCH_STUDENTS_FAILED, payload: { error } });
             }
         }
@@ -288,10 +266,11 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
                 //dispatch({ type: SAVE_STUDENT_SUCCEEDED, payload: { student: savedStudent } });
             } catch (error) {
                 log('saveStudent failed');
+                await saveStudentDBCallback(student)
                 dispatch({ type: SAVE_STUDENT_FAILED, payload: { error } });
             }
         }else {
-            // await saveStudentDBCallback(student)
+            await saveStudentDBCallback(student)
         }
     }
 
@@ -302,9 +281,13 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
             const deletedStudent = await (removeStudent(token, student));
             log('deleteStudent succeeded');
             dispatch({ type: DELETE_STUDENT_SUCCEEDED, payload: { student: deletedStudent } });
+
+            await deleteStudentDBCallback(student.id || "")
+
         } catch (error) {
             log('deleteStudent failed');
             dispatch({ type: DELETE_STUDENT_FAILED, payload: { error } });
+            await deleteStudentDBCallback(student.id || "")
         }
     }
 
@@ -391,6 +374,8 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
             console.log('Keys found after remove', await Storage.keys());
 
             console.log('student is deleted from local storage');
+
+            await updateStudentsListCallback()
         })(studentId);
     }
     async function deleteStudentsDBCallback() {
@@ -416,31 +401,26 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
         await (async () => {
             const {Storage} = Plugins;
 
-            var studentss: StudentProps[];
-            studentss = []
+            var studentss: StudentProps[] = [];
 
             // Loading keys () => Promise<{ keys: string[] }>
             const {keys} = await Storage.keys();
             console.log('Keys found', keys);
 
-            await keys.forEach(async key=>{
-
-                if(key != "token"){
-                let student = await getStudentDBCallback(key)
-                console.log("I found this student:", student)
-                console.log("I found this studentss:", studentss)
-
-                    //studentss = studentss.splice(0,0, student);
-                    studentss.push(student);
-                    //studentss.splice(0,0,student);
+            for (let i = 0; i < keys.length; i++) {
+                let key = keys[i]
+                if(key != "token") {
+                    let student: StudentProps = await getStudentDBCallback(key)
+                    studentss.push(student)
                 }
-            })
+            }
 
-            console.log("-----------------------------------cacacacacaacaac")
-            console.log("I send this studentss:", studentss)
+            //console.log("-----------------------------------cacacacacaacaac")
+            //console.log("I send this studentss:", {studentss})
+            //console.log("I send this studentss:", studentss)
             dispatch({type: UPDATE_STUDENTS_LIST, payload: {studentss}});
 
-            console.log('students are deleted from local storage');
+            //console.log('students are deleted from local storage');
         })();
     }
 };
