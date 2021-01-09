@@ -10,7 +10,7 @@ const studentUrl = `http://${baseUrl}/api/student`;
 
 export const getStudents: (token: string) => Promise<StudentProps[]> = token => {
     var result = axios.get(studentUrl, authConfig(token))
-
+/*
     result.then(async result => {
         for (const student of result.data) {
             await Storage.set({
@@ -26,7 +26,7 @@ export const getStudents: (token: string) => Promise<StudentProps[]> = token => 
             });
         }
     });
-
+*/
     return withLogs(result, 'getStudents');
 }
 
@@ -37,6 +37,7 @@ export const getStudentsPaging: (token: string) => Promise<StudentProps[]> = tok
 export const createStudent: (token: string, student: StudentProps) => Promise<StudentProps[]> = (token, student) => {
     var result = axios.post(studentUrl, student, authConfig(token))
 
+    /*
     result.then(async result => {
         var student = result.data
         await Storage.set({
@@ -51,14 +52,14 @@ export const createStudent: (token: string, student: StudentProps) => Promise<St
             }),
         });
     });
-
+    */
     return withLogs(result, 'createStudent');
 }
 
 export const updateStudent: (token: string, student: StudentProps) => Promise<StudentProps[]> = (token, student) => {
 
     var result = axios.put(`${studentUrl}/${student.id}`, student, authConfig(token))
-
+/*
         result.then(async result => {
         var student = result.data
         await Storage.set({
@@ -73,14 +74,14 @@ export const updateStudent: (token: string, student: StudentProps) => Promise<St
                 }),
             });
         });
-
+*/
     return withLogs(result, 'updateStudent');
 }
 
 export const forceUpdateStudent: (token: string, student: StudentProps) => Promise<StudentProps[]> = (token, student) => {
 
     var result = axios.put(`${studentUrl}/force/${student.id}`, student, authConfig(token))
-
+/*
     result.then(async result => {
         var student = result.data
         await Storage.set({
@@ -95,7 +96,7 @@ export const forceUpdateStudent: (token: string, student: StudentProps) => Promi
             }),
         });
     });
-
+*/
     return withLogs(result, 'updateStudent');
 }
 
