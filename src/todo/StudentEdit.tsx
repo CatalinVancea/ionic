@@ -31,7 +31,7 @@ interface StudentEditProps extends RouteComponentProps<{
 }> {}
 
 export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
-    const { students, saving, savingError, saveStudent, deleteStudent, forceSaveStudent, syncFunction} = useContext(StudentContext);
+    const { students, saving, savingError, saveStudent, deleteStudent, forceUpdateStudent, syncFunction} = useContext(StudentContext);
     const [name, setName] = useState('');
     const [showDiv, setShowDiv] = useState(false);
     const [graduated, setGraduated] = useState(Boolean());
@@ -88,21 +88,20 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
         return c;
         log("handleSave: stop")
     };
-    const handleForceSave = () => {
+    const handleForceUpdate = () => {
         const editedStudent = student ? {...student, name, graduated, grade, enrollment} : {
             name,
             graduated,
             grade,
             enrollment
         };
-        forceSaveStudent && forceSaveStudent(editedStudent).then(() => history.goBack());
+        forceUpdateStudent && forceUpdateStudent(editedStudent).then(() => history.goBack());
     };
     const handleSync = () => {
         if (syncFunction) {
             syncFunction()
             history.goBack();
         }
-
     };
     const handleDelete = () => {
         const deletedStudent = student ? { ...student, name, graduated, grade, enrollment } : { name, graduated, grade, enrollment };
@@ -119,8 +118,8 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
                         <div  style={{ color: 'red' }}>
                             <div>Conflict</div>
                             <IonButtons slot="end">
-                                <IonButton onClick={()=>{handleForceSave()}}>
-                                    Force Save
+                                <IonButton onClick={()=>{handleForceUpdate()}}>
+                                    Force Update
                                 </IonButton>
                                 <IonButton onClick={()=>{handleSync()}}>
                                     Featch data

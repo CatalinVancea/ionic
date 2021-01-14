@@ -24,7 +24,7 @@ import { useNetwork } from './useNetwork';
 const log = getLogger('StudentList');
 
 export const StudentList: React.FC<RouteComponentProps> = ({ history }) => {
-    const { students, fetching, fetchingError, syncFunction } = useContext(StudentContext);
+    const { students, fetching, fetchingError, syncFunction, lostConnection } = useContext(StudentContext);
     const { logout } = useContext(AuthContext);
     const { networkStatus } = useNetwork();
     log('render');
@@ -46,6 +46,22 @@ export const StudentList: React.FC<RouteComponentProps> = ({ history }) => {
                         <div>
                             <IonIcon icon={planetOutline} size={"900"}/>
                             <div>You are offline</div>
+                        </div>
+                    )}
+
+                    {(lostConnection == true) && (
+                        <div>
+                            <IonIcon icon="add-outline"></IonIcon>
+                            <IonIcon icon={globeOutline} size={"900"} />
+                            <div>You have not connection to server</div>
+                        </div>
+                    )}
+
+                    {(lostConnection == false) && (
+                        <div>
+                            <IonIcon icon="add-outline"></IonIcon>
+                            <IonIcon icon={globeOutline} size={"900"} />
+                            <div>You have connection to server</div>
                         </div>
                     )}
 

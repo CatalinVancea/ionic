@@ -78,7 +78,7 @@ export const updateStudent: (token: string, student: StudentProps) => Promise<St
     return withLogs(result, 'updateStudent');
 }
 
-export const forceUpdateStudent: (token: string, student: StudentProps) => Promise<StudentProps[]> = (token, student) => {
+export const forceUpdateStudentApi: (token: string, student: StudentProps) => Promise<StudentProps[]> = (token, student) => {
 
     var result = axios.put(`${studentUrl}/force/${student.id}`, student, authConfig(token))
 /*

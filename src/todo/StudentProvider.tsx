@@ -10,7 +10,7 @@ import {
     removeStudent,
     getStudentsPaging,
     getStudent,
-    forceUpdateStudent
+    forceUpdateStudentApi
 } from './StudentApi';
 import { AuthContext } from '../auth';
 import {useNetwork} from "./useNetwork";
@@ -19,7 +19,7 @@ import {Plugins} from "@capacitor/core";
 const log = getLogger('StudentProvider');
 
 type SaveStudentFn = (student: StudentProps) => Promise<any>;
-type ForceSaveStudentFn = (student: StudentProps) => Promise<any>;
+type ForceUpdateStudentFn = (student: StudentProps) => Promise<any>;
 type DeleteStudentFn = (student: StudentProps) => Promise<any>;
 type FetchStudentPagingFn = (indexx: bigint) => Promise<any>;
 
@@ -41,7 +41,7 @@ export interface StudentsState {
     deleteStudent?: DeleteStudentFn,
     fetchStudentPaging?: FetchStudentPagingFn,
     lostConnection?: boolean,
-    forceSaveStudent?: ForceSaveStudentFn,
+    forceUpdateStudent?: ForceUpdateStudentFn,
 }
 
 interface ActionProps {
@@ -52,18 +52,31 @@ interface ActionProps {
 const initialState: StudentsState = {
     fetching: false,
     saving: false,
+    lostConnection: false
 };
 
 const FETCH_STUDENTS_STARTED = 'FETCH_STUDENTS_STARTED';
 const FETCH_STUDENTS_SUCCEEDED = 'FETCH_STUDENTS_SUCCEEDED';
 const FETCH_STUDENTS_FAILED = 'FETCH_STUDENTS_FAILED';
+
 const SAVE_STUDENT_STARTED = 'SAVE_STUDENT_STARTED';
+const SAVE_STUDENT_CALLBACK_STARTED = 'SAVE_STUDENT_CALLBACK_STARTED';
 const SAVE_STUDENT_SUCCEEDED = 'SAVE_STUDENT_SUCCEEDED';
+const SAVE_STUDENT_CALLBACK_SUCCEEDED = 'SAVE_STUDENT_CALLBACK_SUCCEEDED';
+const SAVE_STUDENT_WS_SUCCEEDED = 'SAVE_STUDENT_WS_SUCCEEDED';
 const SAVE_STUDENT_FAILED = 'SAVE_STUDENT_FAILED';
+const SAVE_STUDENT_CALLBACK_FAILED = 'SAVE_STUDENT_CALLBACK_FAILED';
+const SAVE_STUDENT_CALLBACK_NETWORK_FAILED = 'SAVE_STUDENT_CALLBACK_NETWORK_FAILED';
+const SAVE_STUDENT_CALLBACK_CONFLICT_FAILED = 'SAVE_STUDENT_CALLBACK_CONFLICT_FAILED';
+
+
 const DELETE_STUDENT_STARTED = 'DELETE_STUDENT_STARTED';
 const DELETE_STUDENT_SUCCEEDED = 'DELETE_STUDENT_SUCCEEDED';
+const DELETE_STUDENT_WS_SUCCEEDED = 'DELETE_STUDENT_WS_SUCCEEDED';
 const DELETE_STUDENT_FAILED = 'DELETE_STUDENT_FAILED';
+
 const FETCH_STUDENTS_PAGING = 'FETCH_STUDENTS_PAGING';
+
 const UPDATE_STUDENTS_LIST = 'UPDATE_STUDENTS_LIST';
 
 const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
@@ -78,8 +91,12 @@ const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
             case FETCH_STUDENTS_FAILED:
                 log("reducer: FETCH_STUDENTS_FAILED")
                 return { ...state, fetchingError: payload.error, fetching: false };
+
             case SAVE_STUDENT_STARTED:
                 log("reducer: SAVE_STUDENT_STARTED")
+                return { ...state, savingError: null, saving: true };
+            case SAVE_STUDENT_CALLBACK_STARTED:
+                log("reducer: SAVE_STUDENT_CALLBACK_STARTED")
                 return { ...state, savingError: null, saving: true };
             case SAVE_STUDENT_SUCCEEDED:
                 log("reducer: SAVE_STUDENT_SUCCEEDED")
@@ -94,12 +111,27 @@ const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
                     students[index] = student;
                 }
 
-                log("reducer: SAVE_STUDENT_SUCCEEDED", state.students)
-                log("reducer: SAVE_STUDENT_SUCCEEDED", students)
+                //log("reducer: SAVE_STUDENT_SUCCEEDED", state.students)
+                //log("reducer: SAVE_STUDENT_SUCCEEDED", students)
                 return { ...state, students:students, saving: false };
+            case SAVE_STUDENT_CALLBACK_SUCCEEDED:
+                log("reducer: SAVE_STUDENT_CALLBACK_SUCCEEDED")
+                return { ...state, saving: false, lostConnection: false};
+            case SAVE_STUDENT_WS_SUCCEEDED:
+                log("reducer: SAVE_STUDENT_WS_SUCCEEDED")
+                return { ...state, saving: false, lostConnection: false};
             case SAVE_STUDENT_FAILED:
                 log("reducer: SAVE_STUDENT_FAILED")
                 return { ...state, savingError: payload.error, saving: false };
+            case SAVE_STUDENT_CALLBACK_FAILED:
+                log("reducer: SAVE_STUDENT_CALLBACK_FAILED")
+                return { ...state, savingError: payload.error, saving: false };
+            case SAVE_STUDENT_CALLBACK_CONFLICT_FAILED:
+                log("reducer: SAVE_STUDENT_CALLBACK_CONFLICT_FAILED")
+                return { ...state, savingError: payload.error, saving: false };
+            case SAVE_STUDENT_CALLBACK_NETWORK_FAILED:
+                log("reducer: SAVE_STUDENT_CALLBACK_NETWORK_FAILED")
+                return { ...state, savingError: payload.error, saving: false, lostConnection: true };
             case DELETE_STUDENT_STARTED:
                 log("reducer: DELETE_STUDENT_STARTED")
                 return { ...state, savingError: null, saving: true };
@@ -120,9 +152,13 @@ const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
                     //log(`reducer-delete5, student: ${students2.length}`);
                 }
                 return { ...state, students:students2, saving: false };
+            case DELETE_STUDENT_WS_SUCCEEDED:
+                log("reducer: DELETE_STUDENT_WS_SUCCEEDED")
+                return { ...state, saving: false };
             case DELETE_STUDENT_FAILED:
                 log("reducer: DELETE_STUDENT_FAILED")
                 return { ...state, savingError: payload.error, saving: false };
+
             case FETCH_STUDENTS_PAGING:
                 log("reducer: FETCH_STUDENTS_PAGING")
                 let studentsAll = [...(state.students || [])];
@@ -141,15 +177,16 @@ const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
 
                 //log('FETCH_STUDENTS_PAGING7');
                 return { ...state, students:studentsAll, saving: false, fetching: true };
+
             case UPDATE_STUDENTS_LIST:
                 log("reducer: UPDATE_STUDENTS_LIST")
                 var studentsUpdate : StudentProps[];
                 studentsUpdate = payload.studentss;
 
                 const students4 = [...(state.students || [])];
-                log("reducer: UPDATE_STUDENTS_LIST", studentsUpdate)
-                log("reducer: UPDATE_STUDENTS_LIST", state.students)
-                log("reducer: UPDATE_STUDENTS_LIST", students4)
+                //log("reducer: UPDATE_STUDENTS_LIST", studentsUpdate)
+                //log("reducer: UPDATE_STUDENTS_LIST", state.students)
+                //log("reducer: UPDATE_STUDENTS_LIST", students4)
                 return { ...state, students:studentsUpdate, saving: false, fetching: false };
                 //return { ...state, saving: false, fetching: false };
             default:
@@ -166,11 +203,11 @@ interface StudentProviderProps {
 export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) => {
     const { networkStatus } = useNetwork();
     const { token } = useContext(AuthContext);
-    const [state, dispatch] = useReducer(reducer, initialState);
-    const { students, fetching, fetchingError, saving, savingError } = state;
+    const [ state, dispatch ] = useReducer(reducer, initialState);
+    const { students, fetching, fetchingError, saving, savingError, lostConnection } = state;
 
-    useEffect(getStudentsEffect, [token]);
-    useEffect(wsEffect, [token]);
+    useEffect(getStudentsEffect, [token, state.lostConnection]);
+    useEffect(wsEffect, [token, state.lostConnection]);
     useEffect(resolveVersionConflict, [networkStatus.connected]);
 
     const saveStudent = useCallback<SaveStudentFn>(saveStudentCallback, [token]);
@@ -178,14 +215,14 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
     const fetchStudentPaging = useCallback<FetchStudentPagingFn>(getStudentsEffectPaging, [token]);
 
     const syncFunction = useCallback<SyncFunctionFn>(syncFunctionCallback, [token]);
-    const forceSaveStudent = useCallback<ForceSaveStudentFn>(forceSaveStudentCallback, [token]);
+    const forceUpdateStudent = useCallback<ForceUpdateStudentFn>(forceUpdateStudentCallback, [token]);
 
-    const saveStudentDB = useCallback<SaveStudentDBFn>(saveStudentDBCallback, []);
-    const deleteStudentDB = useCallback<DeleteStudentDBFn>(deleteStudentDBCallback, []);
-    const getStudentDB = useCallback<GetStudentDBFn>(getStudentDBCallback, []);
-    const deleteStudentsDB = useCallback<DeleteStudentsDBFn>(deleteStudentsDBCallback, []);
+    //const saveStudentDB = useCallback<SaveStudentDBFn>(saveStudentDBCallback, []);
+    //const deleteStudentDB = useCallback<DeleteStudentDBFn>(deleteStudentDBCallback, []);
+    //const getStudentDB = useCallback<GetStudentDBFn>(getStudentDBCallback, []);
+    //const deleteStudentsDB = useCallback<DeleteStudentsDBFn>(deleteStudentsDBCallback, []);
 
-    const value = { students, fetching, fetchingError, saving, savingError, saveStudent, deleteStudent, fetchStudentPaging, syncFunction, forceSaveStudent};
+    const value = { students, fetching, fetchingError, saving, savingError, saveStudent, deleteStudent, fetchStudentPaging, syncFunction, forceUpdateStudent, lostConnection};
 
     log('returns')
 
@@ -346,8 +383,7 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
         }
     }
 
-    async function forceSaveStudentCallback(student: StudentProps) {
-
+    async function forceUpdateStudentCallback(student: StudentProps) {
 
         //throw new Error("Am here");
 
@@ -356,7 +392,7 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
                 log('saveStudent started');
                 dispatch({ type: SAVE_STUDENT_STARTED });
                 log(`saveStudent, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
-                const savedStudent = await forceUpdateStudent(token, student);
+                const savedStudent = await forceUpdateStudentApi(token, student);
                 log('saveStudent succeeded');
                 await saveStudentDBCallback(student)
                 //dispatch({ type: SAVE_STUDENT_SUCCEEDED, payload: { student: savedStudent } });
@@ -372,58 +408,56 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
     async function saveStudentCallback(student: StudentProps) {
         log("saveStudentCallback")
 
-        if (networkStatus.connected) {
-            try {
-                log("saveStudentCallback: bdstate-before save")
-                await bdState()
-                log("saveStudentCallback: ", students)
+        try {
+            //log("saveStudentCallback: bdstate-before save")
+            //await bdState()
+            log("saveStudentCallback: ", students)
 
-                log('saveStudentCallback: saveStudent started');
-                dispatch({ type: SAVE_STUDENT_STARTED });
-                //log(`saveStudent, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
-                const savedStudent = await (student.id ? await updateStudent(token, student) : await createStudent(token, student));
-                log('saveStudentCallback: saveStudent succeeded');
+            log('saveStudentCallback: saveStudent started');
+            dispatch({ type: SAVE_STUDENT_CALLBACK_STARTED });
+            //log(`saveStudent, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
 
-                student.sync = false
-                await saveStudentDBCallback(student)
+            student.sync = false
+            await saveStudentDBCallback(student)
 
-                log("saveStudentCallback: bdstate-after save")
-                await bdState()
-                log("saveStudentCallback: ", students)
+            const savedStudent = await (student.id ? await updateStudent(token, student) : await createStudent(token, student));
+            state.lostConnection = false
+            log('saveStudentCallback: saveStudent succeeded');
 
-                //dispatch({ type: SAVE_STUDENT_SUCCEEDED, payload: { student: savedStudent } });
-            } catch (error) {
-                log('saveStudentCallback: saveStudent failed');
-                //log('saveStudent failed',error);
-                if(error == "Error: Network Error"){
-                    log('saveStudentCallback: Error: Network Error',error == "Error: Network Error");
+            //log("saveStudentCallback: bdstate-after save")
+            //await bdState()
+            log("saveStudentCallback: ", students)
 
-                    student.sync=false
-                    state.lostConnection = true
-                    await saveStudentDBCallback(student)
-                    dispatch({ type: SAVE_STUDENT_FAILED, payload: { error } });
-
-                    throw new Error("Network Error");
-                }
-                if(error == "Error: Request failed with status code 409"){
-                    log("saveStudentCallback: Error: Request failed with status code 409",error == "Error: Request failed with status code 409");
-
-                    student.sync=false
-                    state.lostConnection = true
-                    await saveStudentDBCallback(student)
-                    dispatch({ type: SAVE_STUDENT_FAILED, payload: { error } });
-
-                    throw new Error("Version Conflict");
-                }
+            dispatch({ type: SAVE_STUDENT_CALLBACK_SUCCEEDED})
+        } catch (error) {
+            log('saveStudentCallback: saveStudent failed');
+            //log('saveStudent failed',error);
+            if(error == "Error: Network Error"){
+                log('saveStudentCallback: Error: Network Error', error == "Error: Network Error");
 
                 student.sync=false
                 state.lostConnection = true
                 await saveStudentDBCallback(student)
-                dispatch({ type: SAVE_STUDENT_FAILED, payload: { error } });
+
+                dispatch({ type: SAVE_STUDENT_CALLBACK_NETWORK_FAILED, payload: { error } })
+
+                throw new Error("Network Error");
             }
-        }else {
+            if(error == "Error: Request failed with status code 409"){
+                log("saveStudentCallback: Error: Request failed with status code 409",error == "Error: Request failed with status code 409");
+
+                student.sync=false
+                state.lostConnection = false
+                await saveStudentDBCallback(student)
+                dispatch({ type: SAVE_STUDENT_CALLBACK_CONFLICT_FAILED, payload: { error } })
+
+                throw new Error("Version Conflict");
+            }
+
+            student.sync=false
             state.lostConnection = true
             await saveStudentDBCallback(student)
+            dispatch({ type: SAVE_STUDENT_CALLBACK_FAILED, payload: { error } })
         }
     }
 
@@ -448,45 +482,49 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
         log("wsEffect")
         let canceled = false;
 
+        if(lostConnection == true){
+            return;
+        }
+
         const closeWebSocket = newWebSocket(token, async message => {
             log('wsEffect: wsEffect - onMessage');
-            if(networkStatus.connected == true && (state.lostConnection == null || state.lostConnection == false)) {
-                if (canceled) {
-                    return;
-                }
-                const {event, payload: student} = message;
-                if (event === 'created' || event === 'updated') {
-                    log(`wsEffect: wsEffect created/updated, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment} ${student.version}`);
-                    student.sync = true
-                    log("wsEffect: bdstate-before save")
-                    await bdState()
-                    log("wsEffect: ", students)
 
-                    dispatch({type: SAVE_STUDENT_SUCCEEDED, payload: {student}});
-                    //saveStudentDB(student)
-                    var studentTry:StudentProps = {name: student.name, graduated:student.graduated, grade:student.grade,
-                        enrollment:student.enrollment, id:student.id, sync:true, version:student.version }
-
-
-                    log("coiiiiiiiiuuuuuuuuuuuuuuuuuuuuuccccccccccccccccccccccccc")
-                    log(typeof student)
-                    log(typeof studentTry)
-                    log(student)
-                    log(message.payload)
-
-                    await saveStudentDBCallback( studentTry)
-
-                    log("wsEffect: bdstate-after save")
-                    await bdState()
-                    log("wsEffect: ", students)
-                }
-                if (event === 'deleted') {
-                    log(`wsEffect: wsEffect deleted, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
-                    student.sync = true
-                    dispatch({type: DELETE_STUDENT_SUCCEEDED, payload: {student}});
-                    deleteStudentDBCallback(student.id || "")
-                }
+            if (canceled) {
+                return;
             }
+            const {event, payload: student} = message;
+            if (event === 'created' || event === 'updated') {
+                log(`wsEffect: wsEffect created/updated, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment} ${student.version}`);
+                //student.sync = true
+                //log("wsEffect: bdstate-before save")
+                //await bdState()
+                log("wsEffect: ", students)
+
+                dispatch({type: SAVE_STUDENT_WS_SUCCEEDED});
+
+                //saveStudentDB(student)
+
+                var studentTry:StudentProps = {name: student.name, graduated:student.graduated, grade:student.grade,
+                    enrollment:student.enrollment, id:student.id, sync:true, version:student.version }
+
+                //log("wsEffect: ",typeof student)
+                //log("wsEffect: ",typeof studentTry)
+                //log("wsEffect: ",student)
+                //log("wsEffect: ",message.payload)
+
+                await saveStudentDBCallback( studentTry)
+
+                //log("wsEffect: bdstate-after save")
+                //await bdState()
+                log("wsEffect: ", students)
+            }
+            if (event === 'deleted') {
+                log(`wsEffect: wsEffect deleted, student: ${student.name}  ${student.graduated}  ${student.grade}  ${student.enrollment}`);
+                student.sync = true
+                dispatch({type: DELETE_STUDENT_WS_SUCCEEDED});
+                await deleteStudentDBCallback(student.id || "")
+            }
+
         });
         return () => {
             log('wsEffect: wsEffect - disconnecting');
@@ -496,7 +534,6 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
     }
 
     async function saveStudentDBCallback(student: StudentProps) {
-
 
         log('saveStudentDBCallback');
 
@@ -534,7 +571,7 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
             if (res.value) {
                 //log('Student found', JSON.parse(res.value));
 
-                log("muiuuuuuuuuuuuuuuuc", JSON.parse(res.value))
+                //log("muiuuuuuuuuuuuuuuuc", JSON.parse(res.value))
                 let {student: student2} = JSON.parse(res.value)
                 return student2
 
@@ -577,8 +614,8 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
     }
     async function updateStudentsListCallback() {
         log('updateStudentsListCallback');
-        log("updateStudentsListCallback: bdstate-before update")
-        await bdState()
+        //log("updateStudentsListCallback: bdstate-before update")
+        //await bdState()
         log("updateStudentsListCallback: ", students)
 
         await (async () => {
@@ -597,14 +634,14 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
                 }
             }
 
-            //log("I send this studentss:", {studentss})
-            //log("I send this studentss:", studentss)
+            log("I send this studentss:", {studentss})
+            log("I send this studentss:", studentss)
             dispatch({type: UPDATE_STUDENTS_LIST, payload: {studentss}});
             log("updateStudentsListCallback: state.students is updated from local storage")
         })();
 
-        log("updateStudentsListCallback: bdstate-after update")
-        await bdState()
+        //log("updateStudentsListCallback: bdstate-after update")
+        //await bdState()
         log("updateStudentsListCallback: ", students)
     }
 
