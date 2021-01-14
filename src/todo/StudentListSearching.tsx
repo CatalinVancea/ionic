@@ -96,9 +96,11 @@ export const StudentListSearching: React.FC<RouteComponentProps> = ({ history })
                         {students
                             .filter(student => student.name.indexOf(searchName) >= 0)
                             .map(({ id, name, graduated,
-                                           grade, enrollment}) =>
+                                           grade, enrollment,
+                                      studentPhotos}) =>
                             <Student key={id} id={id} name={name} grade={grade}
                                      graduated={graduated} enrollment={enrollment}
+                                     studentPhotos={studentPhotos}
                                      onEdit={id => history.push(`/student/${id}`)} />
                         )}
                     </IonList>

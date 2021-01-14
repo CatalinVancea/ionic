@@ -78,11 +78,12 @@ export const StudentListPaging: React.FC<RouteComponentProps> = ({ history }) =>
                     visibleStudents && (
                     <IonList>
                         {visibleStudents.map(({ id, name, graduated,
-                                           grade, enrollment}) => {
+                                           grade, enrollment, studentPhotos}) => {
 
                                 return <IonCard key={`${id}`}>
                                             <Student key={id} id={id} name={name} grade={grade}
                                                      graduated={graduated} enrollment={enrollment}
+                                                     studentPhotos={studentPhotos}
                                                      onEdit={id => history.push(`/student/${id}`)}/>
                                         </IonCard>
                             }

@@ -26,9 +26,11 @@ export function usePhotoGallery() {
     });
     const fileName = new Date().getTime() + '.jpeg';
     const savedFileImage = await savePicture(cameraPhoto, fileName);
-    const newPhotos = [savedFileImage, ...photos];
-    setPhotos(newPhotos);
-    set(PHOTO_STORAGE, JSON.stringify(newPhotos));
+    //const newPhotos = [savedFileImage, ...photos];
+    //setPhotos(newPhotos);
+    //set(PHOTO_STORAGE, JSON.stringify(newPhotos));
+
+    return savedFileImage;
   };
 
   const { deleteFile, readFile, writeFile } = useFilesystem();

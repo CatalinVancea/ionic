@@ -356,7 +356,6 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
 
                 await students.forEach(async it=>{
                     it.sync = true
-                    log("pizduuuuuuuuuuuccccccaaaa", it)
                     await saveStudentDBCallback(it)
                 })
 
@@ -411,7 +410,7 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
         try {
             //log("saveStudentCallback: bdstate-before save")
             //await bdState()
-            log("saveStudentCallback: ", students)
+            //log("saveStudentCallback: student:", student)
 
             log('saveStudentCallback: saveStudent started');
             dispatch({ type: SAVE_STUDENT_CALLBACK_STARTED });
@@ -419,6 +418,8 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
 
             student.sync = false
             await saveStudentDBCallback(student)
+
+            log("saveStudentCallback student:", student);
 
             const savedStudent = await (student.id ? await updateStudent(token, student) : await createStudent(token, student));
             state.lostConnection = false
@@ -505,7 +506,7 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
                 //saveStudentDB(student)
 
                 var studentTry:StudentProps = {name: student.name, graduated:student.graduated, grade:student.grade,
-                    enrollment:student.enrollment, id:student.id, sync:true, version:student.version }
+                    enrollment:student.enrollment, id:student.id, sync:true, version:student.version, studentPhotos:student.studentPhotos}
 
                 //log("wsEffect: ",typeof student)
                 //log("wsEffect: ",typeof studentTry)
@@ -539,7 +540,10 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
 
         log("saveStudentDBCallback: bdstate-before save")
         await bdState()
-        log("saveStudentDBCallback: ", students)
+        log("saveStudentDBCallback: ", student)
+        log("saveStudentDBCallback: ", JSON.stringify({
+            student: student
+        }))
 
         await (async () => {
             const { Storage } = Plugins;

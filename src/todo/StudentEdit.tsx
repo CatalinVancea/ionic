@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import update from 'immutability-helper';
 import {
     IonButton,
     IonButtons,
@@ -45,6 +46,7 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
     const [showDiv, setShowDiv] = useState(false);
     const [graduated, setGraduated] = useState(Boolean());
     const [grade, setGrade] = useState(Number());
+    const [studentPhotos, setStudentPhotos] = useState<Photo[]>([]);
     const [enrollment, setEnrollment] = useState('2012-12-15T13:47:20.789');
     const [student, setStudent] = useState<StudentProps>();
     const { photos, takePhoto, deletePhoto } = usePhotoGallery();
@@ -59,18 +61,35 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
             setEnrollment(student.enrollment || '');
             setGraduated(student.graduated || Boolean());
             setGrade(student.grade || Number());
+            setStudentPhotos(student.studentPhotos || []);
         }
     }, [match.params.id, students]);
-    const handleSave = async () => {
-        log("handleSave: start")
-        const editedStudent = student ? {...student, name, graduated, grade, enrollment} : {
+
+    const handleTakePhoto = async () => {
+        log("handleTakePhoto: start")
+        const editedStudent = student ? {...student, name, graduated, grade, enrollment, studentPhotos} : {
             name,
             graduated,
             grade,
-            enrollment
+            enrollment,
+            studentPhotos
         };
-        //saveStudent && saveStudent(editedStudent).then(() => history.goBack());
 
+        const photoTaken = await takePhoto()
+        const newPhotos = [photoTaken, ...studentPhotos];
+        setStudentPhotos(newPhotos);
+
+        log("handleTakePhoto: stop")
+    };
+    const handleSave = async () => {
+        log("handleSave: start")
+        const editedStudent = student ? {...student, name, graduated, grade, enrollment, studentPhotos} : {
+            name,
+            graduated,
+            grade,
+            enrollment,
+            studentPhotos,
+        };
 
         var c: boolean;
         c = false;
@@ -100,11 +119,12 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
         log("handleSave: stop")
     };
     const handleForceUpdate = () => {
-        const editedStudent = student ? {...student, name, graduated, grade, enrollment} : {
+        const editedStudent = student ? {...student, name, graduated, grade, enrollment, studentPhotos} : {
             name,
             graduated,
             grade,
-            enrollment
+            enrollment,
+            studentPhotos
         };
         forceUpdateStudent && forceUpdateStudent(editedStudent).then(() => history.goBack());
     };
@@ -115,7 +135,13 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
         }
     };
     const handleDelete = () => {
-        const deletedStudent = student ? { ...student, name, graduated, grade, enrollment } : { name, graduated, grade, enrollment };
+        const deletedStudent = student ? {...student, name, graduated, grade, enrollment, studentPhotos} : {
+            name,
+            graduated,
+            grade,
+            enrollment,
+            studentPhotos
+        };
         deleteStudent && deleteStudent(deletedStudent).then(() => history.goBack());
     };
     log('render');
@@ -191,7 +217,7 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
                     </IonHeader>
                     <IonGrid>
                         <IonRow>
-                            {photos.map((photo, index) => (
+                            {studentPhotos.map((photo, index) => (
                                 <IonCol size="6" key={index}>
                                     <IonImg onClick={() => setPhotoToDelete(photo)}
                                             src={photo.webviewPath}/>
@@ -200,7 +226,7 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
                         </IonRow>
                     </IonGrid>
                     <IonFab vertical="bottom" horizontal="center" slot="fixed">
-                        <IonFabButton onClick={() => takePhoto()}>
+                        <IonFabButton onClick={handleTakePhoto}>
                             <IonIcon icon={camera}/>
                         </IonFabButton>
                     </IonFab>

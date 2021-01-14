@@ -1,3 +1,5 @@
+import {Photo} from "./usePhotoGallery";
+
 export interface StudentProps {
     id?: string;
     name: string;
@@ -6,4 +8,5 @@ export interface StudentProps {
     enrollment?: string;
     version?: string;
     sync?: boolean;
+    studentPhotos: Photo[];
 }

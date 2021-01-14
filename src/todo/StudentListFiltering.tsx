@@ -91,11 +91,14 @@ export const StudentListFiltering: React.FC<RouteComponentProps> = ({ history })
 
                 {visibleStudents && (
                     <IonList>
-                        {visibleStudents.map(({ id, name, graduated,
-                                           grade, enrollment}) =>
-                                <Student key={id} id={id} name={name} grade={grade}
-                                     graduated={graduated} enrollment={enrollment}
-                                     onEdit={id => history.push(`/student/${id}`)} />
+                        {visibleStudents.map(( { id, name, graduated,
+                                                   studentPhotos, grade, enrollment,
+                                                   sync, version}) =>
+                            id && studentPhotos && (
+                                <Student key={id} id={id} name={name} grade={grade} graduated={graduated}
+                                         enrollment={enrollment} sync={sync} version={version}
+                                         onEdit={id => history.push(`/student/${id}`)} studentPhotos={studentPhotos}/>
+                            )
                         )}
                     </IonList>
                 )}
