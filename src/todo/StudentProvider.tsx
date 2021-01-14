@@ -604,7 +604,7 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
 
             const {keys} = await Storage.keys();
             keys.forEach(async (key) => {
-                if (key != "token") {
+                if (key != "token" && key != "photos") {
                     await deleteStudentDBCallback(key)
                 }
             })
@@ -628,7 +628,7 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
 
             for (let i = 0; i < keys.length; i++) {
                 let key = keys[i]
-                if(key != "token") {
+                if(key != "token" && key != "photos") {
                     let student: StudentProps = await getStudentDBCallback(key)
                     studentss.push(student)
                 }

@@ -14,7 +14,15 @@ import {
     IonDatetime,
     IonFooter,
     IonToggle,
-    IonItemDivider, IonIcon
+    IonItemDivider,
+    IonIcon,
+    IonActionSheet,
+    IonCol,
+    IonFab,
+    IonFabButton,
+    IonGrid,
+    IonImg,
+    IonRow,
 } from '@ionic/react';
 
 
@@ -22,7 +30,8 @@ import { getLogger } from '../core';
 import { StudentContext } from './StudentProvider';
 import { RouteComponentProps } from 'react-router';
 import { StudentProps } from './StudentProps';
-import {globeOutline, logoHackernews} from "ionicons/icons";
+import {globeOutline, logoHackernews, camera, close, trash} from "ionicons/icons";
+import {Photo, usePhotoGallery} from "./usePhotoGallery";
 
 const log = getLogger('StudentEdit');
 
@@ -38,6 +47,8 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
     const [grade, setGrade] = useState(Number());
     const [enrollment, setEnrollment] = useState('2012-12-15T13:47:20.789');
     const [student, setStudent] = useState<StudentProps>();
+    const { photos, takePhoto, deletePhoto } = usePhotoGallery();
+    const [photoToDelete, setPhotoToDelete] = useState<Photo>();
     useEffect(() => {
         log('useEffect');
         const routeId = match.params.id || '';
@@ -172,6 +183,47 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
                     <IonLabel>D MMM YYYY H:mm</IonLabel>
                     <IonDatetime displayFormat="D MMM YYYY H:mm" min="1997" max="2010" value={enrollment} onIonChange={e => setEnrollment(e.detail.value!)}></IonDatetime>
                 </IonItem>
+                <div>
+                    <IonHeader collapse="condense">
+                        <IonToolbar>
+                            <IonTitle size="large">Blank</IonTitle>
+                        </IonToolbar>
+                    </IonHeader>
+                    <IonGrid>
+                        <IonRow>
+                            {photos.map((photo, index) => (
+                                <IonCol size="6" key={index}>
+                                    <IonImg onClick={() => setPhotoToDelete(photo)}
+                                            src={photo.webviewPath}/>
+                                </IonCol>
+                            ))}
+                        </IonRow>
+                    </IonGrid>
+                    <IonFab vertical="bottom" horizontal="center" slot="fixed">
+                        <IonFabButton onClick={() => takePhoto()}>
+                            <IonIcon icon={camera}/>
+                        </IonFabButton>
+                    </IonFab>
+                    <IonActionSheet
+                        isOpen={!!photoToDelete}
+                        buttons={[{
+                            text: 'Delete',
+                            role: 'destructive',
+                            icon: trash,
+                            handler: () => {
+                                if (photoToDelete) {
+                                    deletePhoto(photoToDelete);
+                                    setPhotoToDelete(undefined);
+                                }
+                            }
+                        }, {
+                            text: 'Cancel',
+                            icon: close,
+                            role: 'cancel'
+                        }]}
+                        onDidDismiss={() => setPhotoToDelete(undefined)}
+                    />
+                </div>
 
                 <IonLoading isOpen={saving} />
                 {savingError && (
