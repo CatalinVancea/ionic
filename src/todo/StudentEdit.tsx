@@ -55,7 +55,9 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
     const [photoToDelete, setPhotoToDelete] = useState<Photo>();
 
     const myLocation = useMyLocation();
-    const { latitude: lat, longitude: lng } = myLocation.position?.coords || {}
+    //let { latitude: lat, longitude: lng } = myLocation.position?.coords || {lat:26.4324, lng:14.3231}
+    let { lat, lng } = {lat:26.4324, lng:14.3231}
+    const [poss, setPoss] = useState({lat:26.4324, lng:14.3231});
 
     useEffect(() => {
         log('useEffect');
@@ -219,12 +221,12 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
                     <div>My Location is</div>
                     <div>latitude: {lat}</div>
                     <div>longitude: {lng}</div>
-                    {lat && lng &&
+                    {poss &&
                     <MyMap
-                        lat={lat}
-                        lng={lng}
-                        onMapClick={log('onMap')}
-                        onMarkerClick={log('onMarker')}
+                        lat={poss.lat}
+                        lng={poss.lng}
+                        onMapClick={logg('onMap')}
+                        onMarkerClick={logg('onMarker')}
                     />}
                 </div>
                 <div>
@@ -276,6 +278,17 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
             </IonContent>
         </IonPage>
     );
+
+    function logg(source: string) {
+        return (e: any) =>{
+            //lat = e.latLng.lat();
+            //lng = e.latLng.lng();
+            setPoss({lat:e.latLng.lat(), lng: e.latLng.lng()})
+            console.log("1", source, lat, lng);
+            console.log("2", source, e.latLng.lat(), e.latLng.lng());
+            console.log("3", source, lat, lng);
+        }
+    }
 };
 
 export default StudentEdit;
