@@ -56,8 +56,8 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
 
     const myLocation = useMyLocation();
     //let { latitude: lat, longitude: lng } = myLocation.position?.coords || {lat:26.4324, lng:14.3231}
-    let { lat, lng } = {lat:26.4324, lng:14.3231}
-    const [poss, setPoss] = useState<LngLatLocation>({lat:26.4324, lng:14.3231});
+    let { lat, lng } = {lat:26.4324, lng:24.3231}
+    const [position, setPosition] = useState<LngLatLocation>({lat:26.4324, lng:24.3231});
 
     useEffect(() => {
         log('useEffect');
@@ -70,6 +70,7 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
             setGraduated(student.graduated || Boolean());
             setGrade(student.grade || Number());
             setStudentPhotos(student.studentPhotos || []);
+            setPosition(student.position || {lat:26.4324, lng:24.3231})
         }
     }, [match.params.id, students]);
 
@@ -91,13 +92,13 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
     };
     const handleSave = async () => {
         log("handleSave: start")
-        const editedStudent = student ? {...student, name, graduated, grade, enrollment, studentPhotos, poss} : {
+        const editedStudent = student ? {...student, name, graduated, grade, enrollment, studentPhotos, position} : {
             name,
             graduated,
             grade,
             enrollment,
             studentPhotos,
-            position: poss,
+            position,
         };
 
         var c: boolean;
@@ -128,13 +129,13 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
         log("handleSave: stop")
     };
     const handleForceUpdate = () => {
-        const editedStudent = student ? {...student, name, graduated, grade, enrollment, studentPhotos, poss} : {
+        const editedStudent = student ? {...student, name, graduated, grade, enrollment, studentPhotos, position} : {
             name,
             graduated,
             grade,
             enrollment,
             studentPhotos,
-            position: poss,
+            position,
         };
         forceUpdateStudent && forceUpdateStudent(editedStudent).then(() => history.goBack());
     };
@@ -145,13 +146,13 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
         }
     };
     const handleDelete = () => {
-        const deletedStudent = student ? {...student, name, graduated, grade, enrollment, studentPhotos, poss} : {
+        const deletedStudent = student ? {...student, name, graduated, grade, enrollment, studentPhotos, position} : {
             name,
             graduated,
             grade,
             enrollment,
             studentPhotos,
-            position: poss,
+            position,
         };
         deleteStudent && deleteStudent(deletedStudent).then(() => history.goBack());
     };
@@ -221,13 +222,14 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
                     <IonDatetime displayFormat="D MMM YYYY H:mm" min="1997" max="2010" value={enrollment} onIonChange={e => setEnrollment(e.detail.value!)}></IonDatetime>
                 </IonItem>
                 <div>
+
                     <div>My Location is</div>
-                    <div>latitude: {lat}</div>
-                    <div>longitude: {lng}</div>
-                    {poss &&
+                    <div>latitude: {position.lat}</div>
+                    <div>longitude: {position.lng}</div>
+                    {position &&
                     <MyMap
-                        lat={poss.lat}
-                        lng={poss.lng}
+                        lat={position.lat}
+                        lng={position.lng}
                         onMapClick={logg('onMap')}
                         onMarkerClick={logg('onMarker')}
                     />}
@@ -286,7 +288,7 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
         return (e: any) =>{
             //lat = e.latLng.lat();
             //lng = e.latLng.lng();
-            setPoss({lat:e.latLng.lat(), lng: e.latLng.lng()})
+            setPosition({lat:e.latLng.lat(), lng: e.latLng.lng()})
             console.log("1", source, lat, lng);
             console.log("2", source, e.latLng.lat(), e.latLng.lng());
             console.log("3", source, lat, lng);
