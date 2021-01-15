@@ -1,5 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import update from 'immutability-helper';
+import { useMyLocation } from '../todo/maps/useMyLocation';
+import { MyMap } from '../todo/maps/MyMap';
 import {
     IonButton,
     IonButtons,
@@ -51,6 +53,10 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
     const [student, setStudent] = useState<StudentProps>();
     const { photos, takePhoto, deletePhoto } = usePhotoGallery();
     const [photoToDelete, setPhotoToDelete] = useState<Photo>();
+
+    const myLocation = useMyLocation();
+    const { latitude: lat, longitude: lng } = myLocation.position?.coords || {}
+
     useEffect(() => {
         log('useEffect');
         const routeId = match.params.id || '';
@@ -209,6 +215,18 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
                     <IonLabel>D MMM YYYY H:mm</IonLabel>
                     <IonDatetime displayFormat="D MMM YYYY H:mm" min="1997" max="2010" value={enrollment} onIonChange={e => setEnrollment(e.detail.value!)}></IonDatetime>
                 </IonItem>
+                <div>
+                    <div>My Location is</div>
+                    <div>latitude: {lat}</div>
+                    <div>longitude: {lng}</div>
+                    {lat && lng &&
+                    <MyMap
+                        lat={lat}
+                        lng={lng}
+                        onMapClick={log('onMap')}
+                        onMarkerClick={log('onMarker')}
+                    />}
+                </div>
                 <div>
                     <IonHeader collapse="condense">
                         <IonToolbar>
