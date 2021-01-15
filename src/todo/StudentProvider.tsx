@@ -302,14 +302,14 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
                         }
 
                         let student2: StudentProps = await getStudent(token, student1)
-                        log("mmmmmmmmmmmmmmmmmmeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+                        //log("mmmmmmmmmmmmmmmmmmeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
                         log(student1.version)
                         log(student1.sync)
                         log(student2.version)
                         log(student2.sync)
 
                         if (student1.version == student2.version && student1.sync == false) {
-                            log("beeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+                            //log("beeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
                             try {
                                 await (student1.id ? updateStudent(token, student1) : createStudent(token, student1));
                             } catch (error) {
@@ -538,12 +538,12 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
 
         log('saveStudentDBCallback');
 
-        log("saveStudentDBCallback: bdstate-before save")
-        await bdState()
-        log("saveStudentDBCallback: ", student)
-        log("saveStudentDBCallback: ", JSON.stringify({
-            student: student
-        }))
+        //log("saveStudentDBCallback: bdstate-before save")
+        //await bdState()
+        //log("saveStudentDBCallback: ", student)
+        //log("saveStudentDBCallback: ", JSON.stringify({
+        //    student: student
+        //}))
 
         await (async () => {
             const { Storage } = Plugins;
@@ -557,9 +557,9 @@ export const StudentProvider: React.FC<StudentProviderProps> = ({ children }) =>
             });
         })();
 
-        log("saveStudentDBCallback: bdstate-after save")
-        await bdState()
-        log("saveStudentDBCallback: ", students)
+        //log("saveStudentDBCallback: bdstate-after save")
+        //await bdState()
+        //log("saveStudentDBCallback: ", students)
 
         //log('student is setted in local storage');
         await updateStudentsListCallback()

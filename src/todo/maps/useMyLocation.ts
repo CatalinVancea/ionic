@@ -8,6 +8,11 @@ interface MyLocation {
   error?: Error;
 }
 
+export interface LngLatLocation {
+  lng: number;
+  lat: number;
+}
+
 export const useMyLocation = () => {
   const [state, setState] = useState<MyLocation>({});
   useEffect(watchMyLocation, []);
@@ -15,7 +20,7 @@ export const useMyLocation = () => {
 
   function watchMyLocation() {
     let cancelled = false;
-    
+
     Geolocation.getCurrentPosition()
       .then(position => updateMyPosition('current', position))
       .catch(error => updateMyPosition('current',undefined, error));

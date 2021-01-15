@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import update from 'immutability-helper';
-import { useMyLocation } from '../todo/maps/useMyLocation';
+import { useMyLocation, LngLatLocation} from '../todo/maps/useMyLocation';
 import { MyMap } from '../todo/maps/MyMap';
 import {
     IonButton,
@@ -57,7 +57,7 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
     const myLocation = useMyLocation();
     //let { latitude: lat, longitude: lng } = myLocation.position?.coords || {lat:26.4324, lng:14.3231}
     let { lat, lng } = {lat:26.4324, lng:14.3231}
-    const [poss, setPoss] = useState({lat:26.4324, lng:14.3231});
+    const [poss, setPoss] = useState<LngLatLocation>({lat:26.4324, lng:14.3231});
 
     useEffect(() => {
         log('useEffect');
@@ -91,12 +91,13 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
     };
     const handleSave = async () => {
         log("handleSave: start")
-        const editedStudent = student ? {...student, name, graduated, grade, enrollment, studentPhotos} : {
+        const editedStudent = student ? {...student, name, graduated, grade, enrollment, studentPhotos, poss} : {
             name,
             graduated,
             grade,
             enrollment,
             studentPhotos,
+            position: poss,
         };
 
         var c: boolean;
@@ -127,12 +128,13 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
         log("handleSave: stop")
     };
     const handleForceUpdate = () => {
-        const editedStudent = student ? {...student, name, graduated, grade, enrollment, studentPhotos} : {
+        const editedStudent = student ? {...student, name, graduated, grade, enrollment, studentPhotos, poss} : {
             name,
             graduated,
             grade,
             enrollment,
-            studentPhotos
+            studentPhotos,
+            position: poss,
         };
         forceUpdateStudent && forceUpdateStudent(editedStudent).then(() => history.goBack());
     };
@@ -143,12 +145,13 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
         }
     };
     const handleDelete = () => {
-        const deletedStudent = student ? {...student, name, graduated, grade, enrollment, studentPhotos} : {
+        const deletedStudent = student ? {...student, name, graduated, grade, enrollment, studentPhotos, poss} : {
             name,
             graduated,
             grade,
             enrollment,
-            studentPhotos
+            studentPhotos,
+            position: poss,
         };
         deleteStudent && deleteStudent(deletedStudent).then(() => history.goBack());
     };

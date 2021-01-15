@@ -1,4 +1,5 @@
 import {Photo} from "./usePhotoGallery";
+import {LngLatLocation} from "./maps/useMyLocation";
 
 export interface StudentProps {
     id?: string;
@@ -9,4 +10,5 @@ export interface StudentProps {
     version?: string;
     sync?: boolean;
     studentPhotos: Photo[];
+    position?: LngLatLocation;
 }
