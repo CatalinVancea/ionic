@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import update from 'immutability-helper';
 import { useMyLocation, LngLatLocation} from '../todo/maps/useMyLocation';
 import { MyMap } from '../todo/maps/MyMap';
+
 import {
     IonButton,
     IonButtons,
@@ -26,6 +27,7 @@ import {
     IonGrid,
     IonImg,
     IonRow,
+    createAnimation,
 } from '@ionic/react';
 
 
@@ -73,6 +75,78 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
             setPosition(student.position || {lat:26.4324, lng:24.3231})
         }
     }, [match.params.id, students]);
+
+
+    useEffect(simpleAnimation, []);
+    useEffect(groupAnimations, []);
+    useEffect(chainAnimations, []);
+
+    function simpleAnimation() {
+        const el = document.querySelector('.square-a');
+        if (el) {
+            log("ppppppppppppppppppppppppppppppp")
+            log("ppppppppppppppppppppppppppppppp")
+            log(el)
+            log("ppppppppppppppppppppppppppppppp")
+            log("ppppppppppppppppppppppppppppppp")
+
+            const animation = createAnimation()
+                .addElement(el)
+                .duration(1000)
+                .direction('alternate')
+                .iterations(Infinity)
+                .beforeStyles({
+                    'background': 'green',
+                })
+                .keyframes([
+                    { offset: 0, transform: 'scale(3)', opacity: '1' },
+                    {
+                        offset: 1, transform: 'scale(1.5)', opacity: '0.5'
+                    }
+                ]);
+            animation.play();
+        }
+    }
+    function groupAnimations() {
+        const elB = document.querySelector('.square-b');
+        const elC = document.querySelector('.square-c');
+        if (elB && elC) {
+            const animationA = createAnimation()
+                .addElement(elB)
+                .fromTo('transform', 'scale(1)', 'scale(1.5)');
+            const animationB = createAnimation()
+                .addElement(elC)
+                .fromTo('transform', 'scale(1)', 'scale(0.5)');
+            const parentAnimation = createAnimation()
+                .duration(10000)
+                .addAnimation([animationA, animationB]);
+            parentAnimation.play();    }
+    }
+    function chainAnimations() {
+        const elB = document.querySelector('.square-b');
+        const elC = document.querySelector('.square-c');
+        if (elB && elC) {
+            const animationA = createAnimation()
+                .addElement(elB)
+                .duration(5000)
+                .fromTo('transform', 'scale(1)', 'scale(1.5)')
+                .afterStyles({
+                    'background': 'green'
+                });
+            const animationB = createAnimation()
+                .addElement(elC)
+                .duration(7000)
+                .fromTo('transform', 'scale(1)', 'scale(0.5)')
+                .afterStyles({
+                    'background': 'green'
+                });
+            (async () => {
+                await animationA.play();
+                await animationB.play();
+            })();
+        }
+    }
+
 
     const handleTakePhoto = async () => {
         log("handleTakePhoto: start")
@@ -204,6 +278,14 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
                 </IonToolbar>
             </IonHeader>
             <IonContent>
+                <div>
+                    bbbbbbb
+                </div>
+                <div className="container">
+                    <div className="square-a">
+                        <p>Test 1</p>
+                    </div>
+                </div>
                 <IonItem>
                     <IonLabel>Student Name</IonLabel>
                     <IonInput value={name} onIonChange={e => setName(e.detail.value || '')} />
@@ -294,6 +376,9 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
             console.log("3", source, lat, lng);
         }
     }
+
+
+
 };
 
 export default StudentEdit;
