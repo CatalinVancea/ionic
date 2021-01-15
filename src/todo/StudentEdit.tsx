@@ -96,12 +96,18 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
                 .direction('alternate')
                 .iterations(Infinity)
                 .beforeStyles({
-                    'background': 'green',
+                    'z-index' : '-1',
+                    'background': 'red',
+                    'color':'green',
+                    'text-color' : 'blue',
+                    'border-color': 'coral',
+                    'border-size' : '50px',
+                    'position':'absolut'
                 })
                 .keyframes([
-                    { offset: 0, transform: 'scale(3)', opacity: '1' },
+                    { offset: 0, transform: 'scale(1.25)', opacity: '1' },
                     {
-                        offset: 1, transform: 'scale(1.5)', opacity: '0.5'
+                        offset: 1, transform: 'scale(0.75)', opacity: '0.5'
                     }
                 ]);
             animation.play();
@@ -113,12 +119,12 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
         if (elB && elC) {
             const animationA = createAnimation()
                 .addElement(elB)
-                .fromTo('transform', 'scale(1)', 'scale(1.5)');
+                .fromTo('transform', 'scale(1)', 'scale(1.25)');
             const animationB = createAnimation()
                 .addElement(elC)
-                .fromTo('transform', 'scale(1)', 'scale(0.5)');
+                .fromTo('transform', 'scale(1)', 'scale(0.75)');
             const parentAnimation = createAnimation()
-                .duration(10000)
+                .duration(5000)
                 .addAnimation([animationA, animationB]);
             parentAnimation.play();    }
     }
@@ -252,7 +258,7 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
                     )}
 
                     <IonButtons slot="end">
-                        <IonButton onClick={()=>{
+                        <IonButton className="square-c" onClick={()=>{
                             if(showDiv==true){
                                 setShowDiv(false)
                             }else{
@@ -261,32 +267,31 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
                         }}>
                             Show Div Test
                         </IonButton>
-                        <IonButton onClick={async () => {
+                        <IonButton className="square-b" onClick={async () => {
                             if (await handleSave() == true) {
                                 setShowDiv(true)
                             } else {
                                 setShowDiv(false)
                                 history.goBack()
                             }
-                        }}>
+                        }} >
                             Save
                         </IonButton>
-                        <IonButton onClick={handleDelete}>
+                        <IonButton onClick={handleDelete} className="square-a">
                             Delete
                         </IonButton>
                     </IonButtons>
                 </IonToolbar>
             </IonHeader>
             <IonContent>
-                <div>
-                    bbbbbbb
+
+
+                <div className="square-a">
+                    <p className="pppp"> </p>
                 </div>
-                <div className="container">
-                    <div className="square-a">
-                        <p>Test 1</p>
-                    </div>
-                </div>
-                <IonItem>
+
+
+                <IonItem className="square-a">
                     <IonLabel>Student Name</IonLabel>
                     <IonInput value={name} onIonChange={e => setName(e.detail.value || '')} />
                 </IonItem>
