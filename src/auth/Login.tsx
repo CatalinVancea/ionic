@@ -30,12 +30,12 @@ export const Login: React.FC<RouteComponentProps> = ({ history }) => {
       log('token = ',token);
       if (token==="professor") {
           log('redirect to professor');
-          //
+          return <Redirect to={{ pathname: '/professor-exam' }} />
       }
 
       if (token==="student") {
           log('redirect to student');
-          //
+          return <Redirect to={{ pathname: '/student-exam' }} />
       }
 
       return <Redirect to={{ pathname: '/' }} />

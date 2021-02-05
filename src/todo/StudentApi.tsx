@@ -2,6 +2,7 @@ import axios from 'axios';
 import { StudentProps } from './StudentProps';
 import { authConfig, baseUrl, getLogger, withLogs } from '../core';
 import { Plugins } from "@capacitor/core";
+import {ParticipationProps} from "./ParticipationProps";
 const { Storage } = Plugins;
 
 const log = getLogger('StudentApi');
@@ -100,7 +101,6 @@ export const forceUpdateStudentApi: (token: string, student: StudentProps) => Pr
     return withLogs(result, 'updateStudent');
 }
 
-
 export const removeStudent: (token: string, student: StudentProps) => Promise<StudentProps[]> = (token, student) => {
     return withLogs(axios.delete(`${studentUrl}/${student.id}`, authConfig(token)), 'deleteStudent');
 }
@@ -109,10 +109,9 @@ export const getStudent: (token: string, student: StudentProps) => Promise<Stude
     return withLogs(axios.get(`${studentUrl}/${student.id}`, authConfig(token)), 'getStudent');
 }
 
-
 interface MessageData {
     event: string;
-    payload: StudentProps;
+    payload: ParticipationProps;
 }
 
 export const newWebSocket = (token: string, onMessage: (data: MessageData) => void) => {
@@ -123,7 +122,6 @@ export const newWebSocket = (token: string, onMessage: (data: MessageData) => vo
     };
     ws.onclose = () => {
         log('web socket onclose');
-
     };
     ws.onerror = error => {
         log('web socket onerror', error);
@@ -137,7 +135,7 @@ export const newWebSocket = (token: string, onMessage: (data: MessageData) => vo
         log(message);
         log(event);
         log(item);
-        log(item.name);
+        log(item.student);
 
         onMessage(JSON.parse(messageEvent.data));
     };

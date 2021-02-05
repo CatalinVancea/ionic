@@ -36,6 +36,9 @@ const App: React.FC = () => (
             <PrivateRoute path="/students" component={StudentList} exact={true} />
             <PrivateRoute path="/student" component={StudentEdit} exact={true} />
             <PrivateRoute path="/student/:id" component={StudentEdit} exact={true} />
+
+            <PrivateRoute path="/student-exam" component={StudentExam} exact={true} />
+            <PrivateRoute path="/profesor-exam" component={ProfessorExam} exact={true} />
             <Route exact path="/" render={() => <Redirect to="/students" />} />
           </StudentProvider>
         </AuthProvider>
