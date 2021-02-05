@@ -16,27 +16,34 @@ import {
     IonItemDivider,
     IonDatetime,
     IonInput,
-    IonButton
+    IonButton,
+    IonModal
 } from '@ionic/react';
 import { add, removeCircle, reload} from 'ionicons/icons';
 import { getLogger } from '../core';
 import { OrderContext } from "./OrdersProvider";
-import Order from "./Order";
 import {OrderProps} from "./OrderProps";
+import Order from "./Order";
+import {AuthContext} from "../auth";
+
 
 const log = getLogger('PostStudent');
 
 export const SolveStudent: React.FC<RouteComponentProps> = ({ history }) => {
     const { orders, fetching, fetchingError, saving, savingError, createOrder, solveOrder} = useContext(OrderContext);
 
+    const [id, setId] = useState('');
     const [name, setName] = useState('');
     const [value, setValue] = useState(Number());
+    const [totalPrice, setTotalPrice] = useState(Number());
+    const [showModal, setShowModal] = useState(false);
     const [order, setOrder] = useState<OrderProps>();
+    const { token } = useContext(AuthContext);
 
-    const handleSave = () => {
+    const handleSolve = () => {
         log('handleSave entry');
-        const editedOrder = order ? { ...order, name} : { name};
-        solveOrder && solveOrder(editedOrder, value).then();
+        const editedOrder = order ? { ...order, id, name} : { id, name};
+        solveOrder && solveOrder(editedOrder, value, token).then();
     };
 
     log('render');
@@ -50,34 +57,35 @@ export const SolveStudent: React.FC<RouteComponentProps> = ({ history }) => {
             <IonContent>
 
                 <div>
-                    <IonItem>
-                        <IonLabel>Order Name</IonLabel>
-                        <IonInput value={name} onIonChange={e => setName(e.detail.value || '')} />
-                    </IonItem>
-                    <IonItem>
-                        <IonLabel>Order Value</IonLabel>
-                        <IonInput type="number" value={value} placeholder="Enter Number" onIonChange={e => setValue(parseInt(e.detail.value!, 10))}></IonInput>
-                    </IonItem>
+                    <IonModal isOpen={showModal} cssClass='my-custom-class'>
+                        <p>This is modal content</p>
 
-                    <IonLoading isOpen={saving} />
-                    {savingError && (
-                        <div>{savingError.message || 'Failed to save student'}</div>
-                    )}
+                        <IonItem>
+                            <IonLabel>Order Value</IonLabel>
+                            <IonInput type="number" value={totalPrice} placeholder="Enter Number" onIonChange={e => setTotalPrice(parseInt(e.detail.value!, 10))}></IonInput>
+                        </IonItem>
 
-                    <IonButton onClick={handleSave}>
-                        Save
-                    </IonButton>
+                        <IonButton onClick={() => {
+                            handleSolve()
+                            setShowModal(false)}
+                        }>Close Modal</IonButton>
+                    </IonModal>
                 </div>
-
 
                 <IonLoading isOpen={fetching} message="Fetching students" />
                 {orders && (
                     <IonList>
                         {orders.map(({ id, name, totalPrice,
                                          status, boughtBy,quantity}) =>
-                            <Order key={id} id={id} name={name} status={status}
-                                   boughtBy={boughtBy} quantity={quantity}
-                                   totalPrice={totalPrice}/>
+                            <div onClick={()=>{
+                                setId(id||"")
+                                setName(name||"")
+                                setShowModal(true)
+                            }}>
+                                <Order key={id} id={id} name={name} status={status}
+                                       boughtBy={boughtBy} quantity={quantity}
+                                       totalPrice={totalPrice} />
+                            </div>
                         )}
                     </IonList>
                 )}

@@ -47,7 +47,7 @@ export const getActiveOrdersApi: () => Promise<OrderProps[]> = () => {
     return withLogs(axios.get(`${orderUrl}?status=active`, config), 'getExams');
 }
 
-export const solveOrderApi: (order: OrderProps, totalPrice:number, user:String) => Promise<ParticipationProps[]> = (order, totalPrice ,user)=> {
+export const solveOrderApi: (order: OrderProps, totalPrice:number, user:string) => Promise<ParticipationProps[]> = (order, totalPrice ,user)=> {
     return withLogs(axios.patch(`${orderUrl}/${order.id}`, {totalPrice:totalPrice, status:'done', boughtBy:user}, config), 'updateParticipation');
 }
 

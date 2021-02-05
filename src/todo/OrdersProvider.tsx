@@ -9,7 +9,7 @@ import {StudentProps} from "./StudentProps";
 const log = getLogger('OrderProvider');
 
 type CreateOrderFn = (order: OrderProps, value:number) => Promise<any>;
-type SolveOrderFn = (order: OrderProps, totalPrice:number) => Promise<any>;
+type SolveOrderFn = (order: OrderProps, totalPrice:number, token:string) => Promise<any>;
 
 export interface OrdersState {
     
@@ -131,10 +131,11 @@ export const OrdersProvider: React.FC<OrdersProviderProps> = ({ children }) => {
         }
     }
 
-    async function solveOrderCallback(order: OrderProps, totalPrice: number) {
+    async function solveOrderCallback(order: OrderProps, totalPrice: number, token:string) {
         try {
             log('saveOrder started');
             dispatch({ type: SAVE_ORDER_STARTED });
+            log('tokeeeeeeeeeeeeeeeeen',token);
             const savedOrder = await solveOrderApi(order, totalPrice, token);
             log('saveOrder succeeded');
             dispatch({ type: SAVE_ORDER_SUCCEEDED, payload: { order: savedOrder } });
