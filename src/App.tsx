@@ -28,6 +28,8 @@ import { AuthProvider, Login, PrivateRoute } from './auth';
 import ProfessorExam from "./todo/ProfessorExam";
 import {ItemProvider} from "./todo/ItemsProvider";
 import HomePage from "./todo/HomePage";
+import PostStudent from "./todo/PostStudent";
+import SolveStudent from "./todo/SolveStudent";
 
 const App: React.FC = () => (
   <IonApp>
@@ -35,10 +37,11 @@ const App: React.FC = () => (
       <IonRouterOutlet>
         <AuthProvider>
           <Route path="/login" component={Login} exact={true}/>
-            <Route path="/home" component={HomePage} exact={true} />
+
             <Route exact path="/" render={() => <Redirect to="/home" />} />
 
             <ItemProvider>
+              <PrivateRoute path="/home" component={HomePage} exact={true} />
               <PrivateRoute path="/post-order" component={PostStudent} exact={true} />
               <PrivateRoute path="/solve-order" component={SolveStudent} exact={true} />
             </ItemProvider>

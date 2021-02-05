@@ -30,6 +30,8 @@ export const ProfessorExam: React.FC<RouteComponentProps> = ({ history }) => {
             </IonHeader>
             <IonContent>
                 <IonLoading isOpen={fetching} message="Fetching students" />
+
+                {/*
                 {participations && (
                     <IonList>
                         {participations.map(({ id, name, graduated,
@@ -40,6 +42,7 @@ export const ProfessorExam: React.FC<RouteComponentProps> = ({ history }) => {
                         )}
                     </IonList>
                 )}
+                */}
                 {fetchingError && (
                     <div>{fetchingError.message || 'Failed to fetch students'}</div>
                 )}
