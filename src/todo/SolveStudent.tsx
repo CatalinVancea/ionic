@@ -23,7 +23,7 @@ import { add, removeCircle, reload} from 'ionicons/icons';
 import { getLogger } from '../core';
 import { OrderContext } from "./OrdersProvider";
 import {OrderProps} from "./OrderProps";
-import Order from "./Order";
+import OrderForSolve from "./OrderForSolve";
 import {AuthContext} from "../auth";
 
 
@@ -82,9 +82,9 @@ export const SolveStudent: React.FC<RouteComponentProps> = ({ history }) => {
                                 setName(name||"")
                                 setShowModal(true)
                             }}>
-                                <Order key={id} id={id} name={name} status={status}
+                                <OrderForSolve key={id} id={id} name={name} status={status}
                                        boughtBy={boughtBy} quantity={quantity}
-                                       totalPrice={totalPrice} />
+                                       totalPrice={totalPrice}/>
                             </div>
                         )}
                     </IonList>

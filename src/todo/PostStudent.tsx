@@ -21,14 +21,15 @@ import {
 import { add, removeCircle, reload} from 'ionicons/icons';
 import { getLogger } from '../core';
 import { OrderContext } from "./OrdersProvider";
-import Order from "./Order";
+import OrderForPost from "./OrderForPost";
 import {OrderProps} from "./OrderProps";
+import {AuthContext} from "../auth";
 
 const log = getLogger('PostStudent');
 
 export const PostStudent: React.FC<RouteComponentProps> = ({ history }) => {
     const { orders, fetching, fetchingError, saving, savingError, createOrder} = useContext(OrderContext);
-
+    const { token } = useContext(AuthContext);
     const [name, setName] = useState('');
     const [value, setValue] = useState(Number());
     const [order, setOrder] = useState<OrderProps>();
@@ -75,9 +76,9 @@ export const PostStudent: React.FC<RouteComponentProps> = ({ history }) => {
                     <IonList>
                         {orders.map(({ id, name, totalPrice,
                                          status, boughtBy,quantity}) =>
-                                <Order key={id} id={id} name={name} status={status}
-                                       boughtBy={boughtBy} quantity={quantity}
-                                       totalPrice={totalPrice}/>
+                                <OrderForPost key={id} id={id} name={name} status={status}
+                                              boughtBy={boughtBy} quantity={quantity}
+                                              totalPrice={totalPrice} price={(quantity?.filter(it=>it.user === token).pop()?.value || 0)/(totalPrice||1)}/>
                         )}
                     </IonList>
                 )}

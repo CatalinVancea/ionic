@@ -4,16 +4,16 @@ import { StudentProps } from './StudentProps';
 import {OrderProps} from "./OrderProps";
 
 interface OrderPropsExt extends OrderProps {
-
 }
 
-const Order: React.FC<OrderPropsExt> = ({ id, name, status,
-                                            boughtBy, quantity, totalPrice}) => {
+const OrderForSolve: React.FC<OrderPropsExt> = ({ id, name, status,
+                                            boughtBy, quantity,
+                                            totalPrice}) => {
     return (
-        <IonItem>
+        <IonItem >
             <IonLabel>{"id: "+id + " name: " + name + " status: " + status + " boughtBy: " + boughtBy}</IonLabel>
         </IonItem>
     );
 };
 
-export default Order;
+export default OrderForSolve;
