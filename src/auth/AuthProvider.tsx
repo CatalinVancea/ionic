@@ -18,7 +18,6 @@ export interface AuthState {
   getTokenStorage?: TokenGetFn;
   pendingAuthentication?: boolean;
   username?: string;
-  password?: string;
   token: string;
 }
 
@@ -66,13 +65,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setState(initialState);
   }
 
-  function loginCallback(username?: string, password?: string): void {
+  function loginCallback(username?: string): void {
     log('login');
     setState({
       ...state,
       pendingAuthentication: true,
-      username,
-      password
+      username
     });
   }
 
@@ -147,8 +145,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           ...state,
           isAuthenticating: true,
         });
-        const { username, password } = state;
-        const { token } = await loginApi(username, password);
+        const { username} = state;
+        const { token } = await loginApi(username);
         if (canceled) {
           return;
         }

@@ -9,17 +9,16 @@ const log = getLogger('Login');
 
 interface LoginState {
   username?: string;
-  password?: string;
 }
 
 export const Login: React.FC<RouteComponentProps> = ({ history }) => {
     log("LoginLoginLogin")
   const { isAuthenticated, isAuthenticating, login, logout, authenticationError, getTokenStorage } = useContext(AuthContext);
   const [state, setState] = useState<LoginState>({});
-  const { username, password } = state;
+  const { username } = state;
   const handleLogin = () => {
     log('handleLogin...');
-    login?.(username, password);
+    login?.(username);
   };
   log('render');
 
@@ -49,13 +48,6 @@ export const Login: React.FC<RouteComponentProps> = ({ history }) => {
           onIonChange={e => setState({
             ...state,
             username: e.detail.value || ''
-          })}/>
-        <IonInput
-          placeholder="Password"
-          value={password}
-          onIonChange={e => setState({
-            ...state,
-            password: e.detail.value || ''
           })}/>
         <IonLoading isOpen={isAuthenticating}/>
         {authenticationError && (
