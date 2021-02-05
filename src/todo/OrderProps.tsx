@@ -10,8 +10,8 @@ interface quantityPair {
 export interface OrderProps {
     id?: string;
     name: string;
-    quantity: quantityPair[];
-    totalPrice: number;
-    boughtBy: string;
-    status: string;
+    quantity?: quantityPair[];
+    totalPrice?: number;
+    boughtBy?: string;
+    status?: string;
 }

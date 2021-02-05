@@ -58,7 +58,7 @@ interface MessageData {
     };
 }
 
-export const newWebSocket = (onMessage: (data: MessageData) => void) => {
+export const newWebSocket = (onMessage: (data: any) => void) => {
     const ws = new WebSocket(`ws://${baseUrl}`)
     ws.onopen = () => {
         log('web socket onopen');
@@ -71,6 +71,16 @@ export const newWebSocket = (onMessage: (data: MessageData) => void) => {
     };
     ws.onmessage = messageEvent => {
         log('web socket onmessage');
+
+        log("ApiApiApiApiApiApiApiApiApiApiApiApiApiApiApiApiApiApiApiApi")
+        const message = JSON.parse(messageEvent.data);
+        const { event, payload: item } = message;
+        log(message);
+        log(event);
+        log(item);
+
+        const order: OrderProps = message as OrderProps;
+        log(order.id);
 
         onMessage(JSON.parse(messageEvent.data));
     };

@@ -4,6 +4,7 @@ import { getLogger } from '../core';
 import {createOrderApi, getOrdersApi, newWebSocket, solveOrderApi} from "./OrderApi";
 import {OrderProps} from "./OrderProps";
 import {AuthContext} from "../auth";
+import {StudentProps} from "./StudentProps";
 
 const log = getLogger('OrderProvider');
 
@@ -77,7 +78,7 @@ interface OrdersProviderProps {
     children: PropTypes.ReactNodeLike,
 }
 
-export const OrderProvider: React.FC<OrdersProviderProps> = ({ children }) => {
+export const OrdersProvider: React.FC<OrdersProviderProps> = ({ children }) => {
     const [state, dispatch] = useReducer(reducer, initialState);
     const { orders, fetching, fetchingError, saving, savingError } = state;
     const { token } = useContext(AuthContext);
@@ -146,11 +147,17 @@ export const OrderProvider: React.FC<OrdersProviderProps> = ({ children }) => {
     function wsEffect() {
         let canceled = false;
         log('wsEffect - connecting');
-        const closeWebSocket = newWebSocket(message => {
+        const closeWebSocket = newWebSocket(async (payload) => {
             if (canceled) {
                 return;
             }
-            const {payload: { order }} = message;
+
+            const order: OrderProps = payload as OrderProps;
+
+
+
+            //var orderTry:OrderProps = {id:order.id || "", name:order.name}
+
 
             log(`ws message, order id ${order.id}`);
 
