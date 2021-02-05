@@ -12,26 +12,38 @@ interface LoginState {
 }
 
 export const Login: React.FC<RouteComponentProps> = ({ history }) => {
-    log("LoginLoginLogin")
-  const { isAuthenticated, isAuthenticating, login, logout, authenticationError, getTokenStorage } = useContext(AuthContext);
+  log("LoginLoginLogin")
+  const { isAuthenticated, isAuthenticating, login, logout, authenticationError, getTokenStorage, token} = useContext(AuthContext);
   const [state, setState] = useState<LoginState>({});
   const { username } = state;
+
   const handleLogin = () => {
     log('handleLogin...');
     login?.(username);
   };
+
   log('render');
 
-
-
-
   if (isAuthenticated) {
-    return <Redirect to={{ pathname: '/' }} />
+
+      log('renderrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr');
+      log('token = ',token);
+      if (token==="professor") {
+          log('redirect to professor');
+          //
+      }
+
+      if (token==="student") {
+          log('redirect to student');
+          //
+      }
+
+      return <Redirect to={{ pathname: '/' }} />
   }
 
-    if (getTokenStorage) {
-        getTokenStorage?.();
-    }
+  if (getTokenStorage) {
+      getTokenStorage?.();
+  }
 
 
   return (
