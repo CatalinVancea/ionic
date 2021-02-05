@@ -164,10 +164,11 @@ export const StudentEdit: React.FC<StudentEditProps> = ({ history, match }) => {
             studentPhotos
         };
 
-        const photoTaken = await takePhoto()
+        const photoTaken = await takePhoto();
         const newPhotos = [photoTaken, ...studentPhotos];
         setStudentPhotos(newPhotos);
 
+        log("handleTakePhoto: stop")
         log("handleTakePhoto: stop")
     };
     const handleSave = async () => {
