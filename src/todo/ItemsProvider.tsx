@@ -6,11 +6,11 @@ import {createParticipation, getExams, getParticipations, newWebSocket, updatePa
 import {ExamProps} from "./ExamProps";
 import {ParticipationProps} from "./ParticipationProps";
 
-const log = getLogger('StudentProvider');
+const log = getLogger('ItemmmmProvider');
 
 type SaveParticipationFn = (participation: ParticipationProps) => Promise<any>;
 
-export interface StudentsState {
+export interface ItemsState {
     
     exams?: ExamProps[],
     participations?: ParticipationProps[],
@@ -27,7 +27,7 @@ interface ActionProps {
     payload?: any,
 }
 
-const initialState: StudentsState = {
+const initialState: ItemsState = {
     fetching: false,
     saving: false,
 };
@@ -41,7 +41,7 @@ const SAVE_PARTICIPATION_SUCCEEDED = 'SAVE_PARTICIPATION_SUCCEEDED';
 const SAVE_PARTICIPATION_FAILED = 'SAVE_PARTICIPATION_FAILED';
 
 
-const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
+const reducer: (state: ItemsState, action: ActionProps) => ItemsState =
     (state, { type, payload }) => {
         switch (type) {
             case FETCH_ITEMS_STARTED:
@@ -72,7 +72,7 @@ const reducer: (state: StudentsState, action: ActionProps) => StudentsState =
         }
     };
 
-export const StudentContext = React.createContext<StudentsState>(initialState);
+export const ItemContext = React.createContext<ItemsState>(initialState);
 
 interface ParticipationProviderProps {
     children: PropTypes.ReactNodeLike,
@@ -88,9 +88,9 @@ export const ItemProvider: React.FC<ParticipationProviderProps> = ({ children })
     log('returns');
 
     return (
-        <StudentContext.Provider value={value}>
+        <ItemContext.Provider value={value}>
             {children}
-        </StudentContext.Provider>
+        </ItemContext.Provider>
     );
 
     function getItemsEffect() {

@@ -145,9 +145,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           ...state,
           isAuthenticating: true,
         });
-        const { username} = state;
-        const { role } = await loginApi(username);
-        const token = role;
+        const { username } = state;
+        //const { role } = await loginApi(username);
+        const token = username?.toString() || "";
 
         //console.log("authprovider role/token",role," ",token)
 

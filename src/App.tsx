@@ -25,6 +25,9 @@ import '@ionic/react/css/display.css';
 /* Theme variables */
 import './theme/variables.css';
 import { AuthProvider, Login, PrivateRoute } from './auth';
+import ProfessorExam from "./todo/ProfessorExam";
+import {ItemProvider} from "./todo/ItemsProvider";
+import HomePage from "./todo/HomePage";
 
 const App: React.FC = () => (
   <IonApp>
@@ -32,15 +35,13 @@ const App: React.FC = () => (
       <IonRouterOutlet>
         <AuthProvider>
           <Route path="/login" component={Login} exact={true}/>
-          <StudentProvider>
-            <PrivateRoute path="/students" component={StudentList} exact={true} />
-            <PrivateRoute path="/student" component={StudentEdit} exact={true} />
-            <PrivateRoute path="/student/:id" component={StudentEdit} exact={true} />
+            <Route path="/home" component={HomePage} exact={true} />
+            <Route exact path="/" render={() => <Redirect to="/home" />} />
 
-            <PrivateRoute path="/student-exam" component={StudentExam} exact={true} />
-            <PrivateRoute path="/profesor-exam" component={ProfessorExam} exact={true} />
-            <Route exact path="/" render={() => <Redirect to="/students" />} />
-          </StudentProvider>
+            <ItemProvider>
+              <PrivateRoute path="/post-order" component={PostStudent} exact={true} />
+              <PrivateRoute path="/solve-order" component={SolveStudent} exact={true} />
+            </ItemProvider>
         </AuthProvider>
       </IonRouterOutlet>
     </IonReactRouter>

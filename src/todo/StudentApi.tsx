@@ -111,7 +111,7 @@ export const getStudent: (token: string, student: StudentProps) => Promise<Stude
 
 interface MessageData {
     event: string;
-    payload: ParticipationProps;
+    payload: StudentProps;
 }
 
 export const newWebSocket = (token: string, onMessage: (data: MessageData) => void) => {
